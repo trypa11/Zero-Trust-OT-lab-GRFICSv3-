@@ -41,7 +41,7 @@ services:
     cap_add:
       - NET_ADMIN
     networks:
-      c-supervisory-net:
+      d-man-ops-net:
         ipv4_address: 192.168.97.5
     volumes:
       - /var/log/wazuh
@@ -58,7 +58,7 @@ services:
     cap_add:
       - NET_ADMIN
     networks:
-      d-man-ops-net:
+      c-supervisory-net:
         ipv4_address: 192.168.96.10
     volumes:
       - scadalts_db:/var/lib/mysql
@@ -114,9 +114,9 @@ services:
       idmz-net:
         ipv4_address: 192.168.90.200
       c-supervisory-net:
-        ipv4_address: 192.168.97.200
-      d-man-ops-net:
         ipv4_address: 192.168.96.200
+      d-man-ops-net:
+        ipv4_address: 192.168.97.200
       e-enterprise-net:
         ipv4_address: 192.168.100.200
 
@@ -350,8 +350,8 @@ networks:
       parent: wlan0.96
     ipam:
       config:
-        - subnet: 192.168.97.0/24
-          gateway: 192.168.97.1
+        - subnet: 192.168.96.0/24
+          gateway: 192.168.96.1
 
   d-man-ops-net:
     driver: macvlan
@@ -359,8 +359,8 @@ networks:
       parent: wlan0.97
     ipam:
       config:
-        - subnet: 192.168.96.0/24
-          gateway: 192.168.96.1
+        - subnet: 192.168.97.0/24
+          gateway: 192.168.97.1
 
   e-enterprise-net:
     driver: macvlan

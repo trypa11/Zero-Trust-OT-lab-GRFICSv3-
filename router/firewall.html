@@ -9,28 +9,28 @@
 {% endif %}
 
 <!-- Existing table, modals, and buttons go here -->
-  <div class="container">
-<nav class="d-flex justify-content-between align-items-center mb-3">
-  </div>
+<div class="container">
+  <nav class="d-flex justify-content-between align-items-center mb-3">
+</div>
 </nav>
 
 {% if dirty %}
-  <div class="alert alert-warning d-flex justify-content-between align-items-center">
-    <span>⚠️ You have unsaved changes</span>
-    <form action="/revert" method="POST">
-     <button class="btn btn-sm btn-outline-secondary">↩️ Revert</button>
-    </form>
+<div class="alert alert-warning d-flex justify-content-between align-items-center">
+  <span>⚠️ You have unsaved changes</span>
+  <form action="/revert" method="POST">
+    <button class="btn btn-sm btn-outline-secondary">↩️ Revert</button>
+  </form>
 
-  </div>
+</div>
 {% endif %}
 
 
 
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h3>Firewall Rules</h3>
-    <form action="/apply" method="POST" class="m-0">
-      <button class="btn btn-sm btn-success">💾 Apply Changes</button>
-    </form>
+  <form action="/apply" method="POST" class="m-0">
+    <button class="btn btn-sm btn-success">💾 Apply Changes</button>
+  </form>
 </div>
 
 <!-- Add Rule Modal -->
@@ -47,7 +47,7 @@
             <label class="form-label">Incoming Interface</label>
             <select name="iface_in" class="form-select">
               {% for ifname, label in labels.items() if label != "Admin" %}
-                <option value="{{ ifname }}">{{ label }} ({{ ifname }})</option>
+              <option value="{{ ifname }}">{{ label }} ({{ ifname }})</option>
               {% endfor %}
             </select>
           </div>
@@ -89,68 +89,79 @@
   </div>
 </div>
 
-{% for iface in ['eth1','eth2'] %}
-  <h4 class="mt-4">{{ labels.get(iface, iface) }} ({{ iface }})</h4>
-  <table class="table table-bordered table-sm align-middle">
-    <thead class="table-light">
-      <tr><th>#</th><th>Src Address</th><th>Dst Address</th><th>Proto</th><th>Port</th><th>Action</th><th></th></tr>
-    </thead>
-    <tbody>
+{% for iface in ['eth1','eth2','eth3','eth4','eth5','eth0'] %}
+<h4 class="mt-4">{{ labels.get(iface, iface) }} ({{ iface }})</h4>
+<table class="table table-bordered table-sm align-middle">
+  <thead class="table-light">
+    <tr>
+      <th>#</th>
+      <th>Src Address</th>
+      <th>Dst Address</th>
+      <th>Proto</th>
+      <th>Port</th>
+      <th>Action</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
     {% for r in rules if r.iface_in == iface %}
-      <tr>
-        <td>{{ loop.index }}</td>
-        <td>{{ r.src }}</td>
-        <td>{{ r.dst }}</td>
-        <td>{{ r.proto }}</td>
-        <td>{{ r.dport }}</td>
-        <td><span class="badge bg-{{ 'success' if r.action=='ACCEPT' else 'danger' }}">{{ r.action }}</span></td>
-<td class="text-center">
-  <div class="btn-group">
-    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-      Actions
-    </button>
-    <ul class="dropdown-menu">
-      <li>
-        <form action="/move" method="POST">
-          <input type="hidden" name="direction" value="up">
-          <input type="hidden" name="rule_num" value="{{ loop.index0 }}">
-          <button type="submit" class="dropdown-item">⬆️ Move Up</button>
-        </form>
-      </li>
-      <li>
-        <form action="/move" method="POST">
-          <input type="hidden" name="direction" value="down">
-          <input type="hidden" name="rule_num" value="{{ loop.index0 }}">
-          <button type="submit" class="dropdown-item">⬇️ Move Down</button>
-        </form>
-      </li>
-      <li><hr class="dropdown-divider"></li>
-      <li>
-        <form action="/delete" method="POST" onsubmit="return confirm('Delete this rule?')">
-          <input type="hidden" name="rule_num" value="{{ loop.index0 }}">
-          <button type="submit" class="dropdown-item text-danger">🗑️ Delete</button>
-        </form>
-      </li>
-    </ul>
-  </div>
-</td>
-      </tr>
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>{{ r.src }}</td>
+      <td>{{ r.dst }}</td>
+      <td>{{ r.proto }}</td>
+      <td>{{ r.dport }}</td>
+      <td><span class="badge bg-{{ 'success' if r.action=='ACCEPT' else 'danger' }}">{{ r.action }}</span></td>
+      <td class="text-center">
+        <div class="btn-group">
+          <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown"
+            aria-expanded="false">
+            Actions
+          </button>
+          <ul class="dropdown-menu">
+            <li>
+              <form action="/move" method="POST">
+                <input type="hidden" name="direction" value="up">
+                <input type="hidden" name="rule_num" value="{{ loop.index0 }}">
+                <button type="submit" class="dropdown-item">⬆️ Move Up</button>
+              </form>
+            </li>
+            <li>
+              <form action="/move" method="POST">
+                <input type="hidden" name="direction" value="down">
+                <input type="hidden" name="rule_num" value="{{ loop.index0 }}">
+                <button type="submit" class="dropdown-item">⬇️ Move Down</button>
+              </form>
+            </li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li>
+              <form action="/delete" method="POST" onsubmit="return confirm('Delete this rule?')">
+                <input type="hidden" name="rule_num" value="{{ loop.index0 }}">
+                <button type="submit" class="dropdown-item text-danger">🗑️ Delete</button>
+              </form>
+            </li>
+          </ul>
+        </div>
+      </td>
+    </tr>
     {% endfor %}
-    </tbody>
-  </table>
+  </tbody>
+</table>
 {% endfor %}
-  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRuleModal">
-    ➕ Add Rule
-  </button>
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRuleModal">
+  ➕ Add Rule
+</button>
 
-    <hr>
+<hr>
 
 <script>
-document.querySelectorAll('form[action="/delete"]').forEach(form => {
-  form.addEventListener('submit', e => {
-    if(!confirm('Delete this rule?')) e.preventDefault();
+  document.querySelectorAll('form[action="/delete"]').forEach(form => {
+    form.addEventListener('submit', e => {
+      if (!confirm('Delete this rule?')) e.preventDefault();
+    });
   });
-});
 </script>
 
 {% endblock %}

@@ -8,8 +8,11 @@ app = Flask(__name__)
 
 INTERFACE_LABELS = {
     "eth0": "Admin",
-    "eth1": "LAN",
-    "eth2": "WAN"
+    "eth1": "Control",
+    "eth2": "Operations",
+    "eth3": "Supervisory",
+    "eth4": "Enterprise",
+    "eth5": "IDMZ"
 }
 
 # SECRET_KEY is required for sessions. Set via env var in compose or host.

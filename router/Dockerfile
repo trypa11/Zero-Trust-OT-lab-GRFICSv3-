@@ -10,7 +10,13 @@ RUN apt-get update && \
     mkdir -p /var/log/flask
 
 
-RUN apt-get update && apt-get install -y supervisor suricata && \
+RUN apt-get update && apt-get install -y supervisor suricata \
+    curl apt-transport-https gnupg2 lsb-release && \
+    curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && \
+    chmod 644 /usr/share/keyrings/wazuh.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" > /etc/apt/sources.list.d/wazuh.list && \
+    apt-get update && \
+    WAZUH_MANAGER="192.168.100.51" apt-get install -y wazuh-agent && \
     mkdir -p /var/log/supervisor
 
 
@@ -23,13 +29,15 @@ COPY app.py /opt/fwui/app.py
 COPY index.html /opt/fwui/templates/index.html
 COPY login.html /opt/fwui/templates/login.html
 COPY firewall.html /opt/fwui/templates/firewall.html
+COPY firewall_logs.html /opt/fwui/templates/firewall_logs.html
 COPY ids.html /opt/fwui/templates/ids.html
 COPY base.html /opt/fwui/templates/base.html
 COPY router.conf /etc/supervisor/conf.d/router.conf
 COPY suricata.yaml /etc/suricata/suricata.yaml
 COPY ulogd.conf /etc/ulogd.conf
-
-
+COPY ot.rules /etc/suricata/rules/ot.rules
+COPY setup-firewall.sh /setup-firewall.sh
+RUN chmod +x /setup-firewall.sh
 RUN chmod +x /entrypoint.sh
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]

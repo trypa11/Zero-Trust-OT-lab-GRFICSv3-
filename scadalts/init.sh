@@ -50,6 +50,6 @@ else
   echo "[*] Skipping project seed (views table already has entries)."
 fi
 
-ip route add 192.168.95.0/24 via 192.168.90.200 || true
+ip route add 192.168.0.0/16 via 192.168.96.200 || true
 
 exit 0

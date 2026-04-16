@@ -18,6 +18,7 @@ RUN apt-get update && \
       ca-certificates supervisor sudo \
       net-tools procps pulseaudio-utils \
       git build-essential cmake qtbase5-dev \
+      openssh-server xrdp \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 
@@ -94,6 +95,14 @@ RUN chown -R engineer:engineer /home/engineer
 
 COPY index.html /opt/noVNC/index.html
 
+# Install Wazuh Agent
+RUN apt-get update && apt-get install -y curl gnupg2 apt-transport-https && \
+    curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && \
+    chmod 644 /usr/share/keyrings/wazuh.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | tee -a /etc/apt/sources.list.d/wazuh.list && \
+    apt-get update && \
+    WAZUH_MANAGER="192.168.100.51" apt-get install -y wazuh-agent && \
+    sed -i '/<syscheck>/a \    <directories check_all="yes" report_changes="yes" realtime="yes">/home/engineer/Desktop</directories>' /var/ossec/etc/ossec.conf
 
 EXPOSE ${NOVNC_PORT} ${VNC_PORT}
 

@@ -153,11 +153,11 @@ outputs:
 
       types:
         - alert:
-            # payload: yes             # enable dumping payload in Base64
-            # payload-buffer-size: 4kb # max size of payload buffer to output in eve-log
-            # payload-printable: yes   # enable dumping payload in printable (lossy) format
-            # packet: yes              # enable dumping of packet (without stream segments)
-            # metadata: no             # enable inclusion of app layer metadata with alert. Default yes
+            payload: yes             # enable dumping payload in Base64
+            payload-buffer-size: 4kb # max size of payload buffer to output in eve-log
+            payload-printable: yes   # enable dumping payload in printable (lossy) format
+            packet: yes              # enable dumping of packet (without stream segments)
+            metadata: yes             # enable inclusion of app layer metadata with alert. Default yes
             # http-body: yes           # Requires metadata; enable dumping of HTTP body in Base64
             # http-body-printable: yes # Requires metadata; enable dumping of HTTP body in printable format
 
@@ -263,18 +263,18 @@ outputs:
             # to yes
             #md5: [body, subject]
 
-        #- dnp3
-        - ftp
-        - rdp
-        - nfs
-        - smb
-        - tftp
-        - ikev2
-        - dcerpc
-        - krb5
-        - snmp
-        - rfb
-        - sip
+        - modbus:
+        - ftp:
+        - rdp:
+        - nfs:
+        - smb:
+        - tftp:
+        - ikev2:
+        - dcerpc:
+        - krb5:
+        - snmp:
+        - rfb:
+        - sip:
         - dhcp:
             enabled: yes
             # When extended mode is on, all DHCP messages are logged
@@ -1348,8 +1348,8 @@ stream:
   memcap: 64mb
   #memcap-policy: ignore
   checksum-validation: yes      # reject incorrect csums
-  #midstream: false
-  #midstream-policy: ignore
+  midstream: true
+  midstream-policy: ignore
   inline: auto                  # auto will use inline mode in IPS mode, yes or no set it statically
   reassembly:
     memcap: 256mb
@@ -1927,7 +1927,7 @@ rule-files:
 
 classification-file: /etc/suricata/classification.config
 reference-config-file: /etc/suricata/reference.config
-# threshold-file: /etc/suricata/threshold.config
+threshold-file: /etc/suricata/threshold.config
 
 ##
 ## Include other configs
@@ -1940,3 +1940,5 @@ reference-config-file: /etc/suricata/reference.config
 # You can specify more than 2 configuration files, if needed.
 #include: include1.yaml
 #include: include2.yaml
+
+# DYNAMIC_CONFIG_START

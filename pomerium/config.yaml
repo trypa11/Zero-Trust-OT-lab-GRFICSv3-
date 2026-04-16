@@ -1,0 +1,47 @@
+authenticate_service_url: https://authenticate.localhost.pomerium.io
+
+idp_provider_url: 'http://keycloak.localhost.pomerium.io:8080/realms/master'
+
+routes:
+  - from: https://nexterm.localhost.pomerium.io
+    to: http://192.168.90.22:6989
+    policy:
+      allow:
+        or:
+          - claim/groups: ot-engineer
+          - claim/groups: plc-developer
+    allow_websockets: true
+
+  - from: https://hmi.localhost.pomerium.io
+    to: http://192.168.96.10:8080
+    policy:
+      allow:
+        and:
+          - claim/groups: ot-engineer
+    allow_websockets: true
+    rewrite_response_headers:
+      - header: Location
+        prefix: http://192.168.96.10:8080/
+        value: https://hmi.localhost.pomerium.io/
+
+  - from: https://plc.localhost.pomerium.io
+    to: http://192.168.95.2:8080
+    policy:
+      allow:
+        and:
+          - claim/groups: ot-engineer
+          - source_ip: 192.168.97.5/32
+
+  - from: https://simulation.localhost.pomerium.io
+    to: http://192.168.95.10:80
+    policy:
+      allow:
+        and:
+          - claim/groups: ot-engineer
+
+  - from: https://router.localhost.pomerium.io
+    to: http://192.168.90.200:5000
+    policy:
+      allow:
+        and:
+          - claim/groups: admin

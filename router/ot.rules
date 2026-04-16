@@ -1,0 +1,13 @@
+# IDS Rules for Dissertation: Zero-Trust OT Scenarios
+
+
+# Dissertation Scenarios: Reactor Pressure Thresholds
+alert modbus 192.168.95.2 502 -> any any (msg:"OT: HIGH ALERT - Reactor Pressure > 80% (52428)"; modbus: access read; modbus: address 108; modbus: value > 52428; classtype: industrial-protocol-anomaly; sid:1000020; rev:2;)
+alert modbus 192.168.95.2 502 -> any any (msg:"OT: SOC CRITICAL - Reactor Pressure > 95% (62258)"; modbus: access read; modbus: address 108; modbus: value > 62258; classtype: fatal-error; sid:1000021; rev:2;)
+
+# Defense-in-Depth: Unauthorized Modbus Writing
+alert modbus !192.168.96.10 any -> 192.168.95.2 502 (msg:"OT: SECURITY VIOLATION - Unauthorized Modbus Write Attempt"; modbus: access write; classtype: attempted-admin; sid:1000030; rev:1;)
+
+# OpenPLC Web UI Login Detection
+alert http any any -> 192.168.95.2 8080 (msg:"PLC: OpenPLC Login Attempt"; flow:established,to_server; content:"POST"; http_method; content:"/login"; http_uri; flowbits:set,plc.login.attempt; noalert; sid:1000100; rev:1;)
+alert http 192.168.95.2 8080 -> any any (msg:"PLC: OpenPLC Management Console Successful Login"; flow:established,from_server; content:"Location: /dashboard"; http_header; flowbits:isset,plc.login.attempt; classtype:successful-admin; sid:1000101; rev:2;)

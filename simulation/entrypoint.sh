@@ -13,7 +13,7 @@ ip addr add 192.168.95.13/24 dev "$IF"
 ip addr add 192.168.95.14/24 dev "$IF"
 ip addr add 192.168.95.15/24 dev "$IF"
 
-route add -net 192.168.90.0/24 gw 192.168.95.200
+route add -net 192.168.0.0/16 gw 192.168.95.200
 
 echo "[entrypoint] Starting nginx..."
 php-fpm8.2 -D

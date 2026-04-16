@@ -1,9 +1,62 @@
 #!/bin/bash
 set -e
 
+# Detect interfaces and create Suricata af-packet config
+cat << 'EOT' > /tmp/suricata-af-packet.yaml
+af-packet:
+EOT
 
-# Optional: enable forwarding in iptables (accept by default)
-iptables -P FORWARD ACCEPT
+# We monitor both the Supervisory (97.0) and Control (95.0) subnets for full flow visibility
+# Use 'ip route get' to find the actual interface for a known IP in that subnet
+S_IFACE=$(ip -4 route get 192.168.96.10 | awk '{print $3}' | head -n 1)
+C_IFACE=$(ip -4 route get 192.168.95.2 | awk '{print $3}' | head -n 1)
+
+ID=1
+for IFACE in "$S_IFACE" "$C_IFACE"; do
+    if [ -n "$IFACE" ] && [ "$IFACE" != "lo" ]; then
+        # Each interface gets its own UNIQUE cluster-id to avoid kernel fanout errors
+        cat << EOF >> /tmp/suricata-af-packet.yaml
+  - interface: $IFACE
+    cluster-id: $ID
+    defrag: yes
+EOF
+        ID=$((ID + 1))
+    fi
+done
+
+# Replace the af-packet section in suricata.yaml
+sed -i '/# DYNAMIC_CONFIG_START/,$d' /etc/suricata/suricata.yaml
+echo "# DYNAMIC_CONFIG_START" >> /etc/suricata/suricata.yaml
+cat /tmp/suricata-af-packet.yaml >> /etc/suricata/suricata.yaml
+
+# Initialize Zero Trust Firewall rules
+/setup-firewall.sh
+
+# Configure Wazuh Agent to monitor Suricata , Firewall JSON logs and Keycloak logs
+if [ -f "/var/ossec/etc/ossec.conf" ] && ! grep -q "/var/log/suricata/eve.json" /var/ossec/etc/ossec.conf; then
+cat << 'EOT' >> /var/ossec/etc/ossec.conf
+
+<ossec_config>
+  <localfile>
+    <log_format>json</log_format>
+    <location>/var/log/suricata/eve.json</location>
+  </localfile>
+  <localfile>
+    <log_format>json</log_format>
+    <location>/var/log/ulog/netfilter_log.json</location>
+  </localfile>
+  <localfile>
+    <log_format>json</log_format>
+    <location>/var/log/keycloak/keycloak.log</location>
+  </localfile>
+</ossec_config>
+EOT
+fi
+
+# Start Wazuh Agent
+if [ -x "/var/ossec/bin/wazuh-control" ]; then
+    /var/ossec/bin/wazuh-control start
+fi
 
 # Show interfaces (for troubleshooting)
 ip -c addr

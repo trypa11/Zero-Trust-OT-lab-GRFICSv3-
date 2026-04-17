@@ -36,6 +36,7 @@ COPY router.conf /etc/supervisor/conf.d/router.conf
 COPY suricata.yaml /etc/suricata/suricata.yaml
 COPY ulogd.conf /etc/ulogd.conf
 COPY ot.rules /etc/suricata/rules/ot.rules
+COPY threshold.config /etc/suricata/threshold.config
 COPY setup-firewall.sh /setup-firewall.sh
 RUN chmod +x /setup-firewall.sh
 RUN chmod +x /entrypoint.sh

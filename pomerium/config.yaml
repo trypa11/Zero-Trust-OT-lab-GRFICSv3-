@@ -19,10 +19,15 @@ routes:
         and:
           - claim/groups: ot-engineer
     allow_websockets: true
+    preserve_host_header: true
+    pass_identity_headers: true
+    timeout: 30m
+    idle_timeout: 30m
     rewrite_response_headers:
       - header: Location
         prefix: http://192.168.96.10:8080/
         value: https://hmi.localhost.pomerium.io/
+
 
   - from: https://plc.localhost.pomerium.io
     to: http://192.168.95.2:8080
@@ -31,7 +36,8 @@ routes:
         and:
           - claim/groups: ot-engineer
           - source_ip: 192.168.97.5/32
-
+ 
+    allow_websockets: true
   - from: https://simulation.localhost.pomerium.io
     to: http://192.168.95.10:80
     policy:

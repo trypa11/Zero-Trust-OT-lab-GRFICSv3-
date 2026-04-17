@@ -1,8 +1,10 @@
 # Binaries and executables
 bin/
 
+guacamole/recordings/*
+
 # Security: Ignore SSL certificates and keys
-config/wazuh_indexer_ssl_certs/
+wazuh_config/wazuh_indexer_ssl_certs/
 **/*.pem
 **/*.key
 **/*.crt

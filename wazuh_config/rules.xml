@@ -1,0 +1,548 @@
+<!-- ==========================================================
+     Combined Custom Rules for Zero-Trust OT Lab
+     Consolidated: Modbus/Suricata, Keycloak, Guacamole, SSH
+     ========================================================== -->
+
+<!-- ===================== MODBUS / SURICATA / OT ===================== -->
+<group name="modbus,suricata,ot_visibility,">
+
+  <!-- Modbus OT Visibility (low-noise READ alerts) -->
+  <rule id="100020" level="3">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature_id">^1000006$|^1000008$</field>
+    <description>Suricata: Modbus OT Visibility - $(alert.signature)</description>
+    <options>no_full_log</options>
+  </rule>
+
+  <!-- Modbus SECURITY ALERT (Write commands from known sources) -->
+  <rule id="100021" level="12">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature_id">^1000001$|^1000002$|^1000003$|^1000004$</field>
+    <description>Suricata: Modbus OT SECURITY ALERT - $(alert.signature)</description>
+    <group>modbus_write,policy_violation,industrial_security,</group>
+  </rule>
+
+  <!-- Modbus Payload Capture (enrichment child rule) -->
+  <rule id="100022" level="3">
+    <if_sid>100020,100021</if_sid>
+    <field name="payload_printable">.+</field>
+    <description>Suricata: Modbus Payload Captured - $(alert.signature)</description>
+    <group>ot_data_capture,</group>
+  </rule>
+
+  <!-- Reactor Pressure High Value Detection -->
+  <rule id="100025" level="12">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature_id">^1000010$|^1000011$</field>
+    <description>Suricata: HIGH REACTOR VALUE DETECTED - $(alert.signature)</description>
+    <group>modbus_anomaly,industrial_security,reactor_critical,</group>
+  </rule>
+
+  <!-- Dissertation: Reactor Pressure > 80% -->
+  <rule id="100026" level="10">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature_id">^1000020$</field>
+    <description>Suricata: DISSERTATION HIGH ALERT - Reactor Pressure > 80%</description>
+    <group>modbus_anomaly,industrial_security,reactor_high,</group>
+  </rule>
+
+  <!-- Dissertation: Reactor Pressure > 95% (CRITICAL) -->
+  <rule id="100027" level="14">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature_id">^1000021$</field>
+    <description>Suricata: DISSERTATION SOC CRITICAL - Reactor Pressure > 95% (EXPLOSION NEAR)</description>
+    <group>modbus_anomaly,industrial_security,reactor_critical,</group>
+  </rule>
+
+  <!-- Unauthorized Modbus Write Attempt (SID 1000030) -->
+  <rule id="100028" level="12">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature_id">^1000030$</field>
+    <description>Suricata: SECURITY VIOLATION - Unauthorized Modbus Write Attempt</description>
+    <group>modbus_write,policy_violation,industrial_security,intrusion_detection,</group>
+  </rule>
+
+  <!-- Modbus Transaction Visibility (all modbus events) -->
+  <rule id="100030" level="3">
+    <if_sid>86600</if_sid>
+    <field name="event_type">^modbus$</field>
+    <description>Suricata: Modbus Transaction [Func: $(modbus.function), Unit: $(modbus.unit_id)]</description>
+    <group>modbus_visibility,protocol_metadata,</group>
+  </rule>
+
+  <!-- Modbus WRITE Operation Detection -->
+  <rule id="100031" level="3">
+    <if_sid>86600</if_sid>
+    <field name="event_type">^modbus$</field>
+    <field name="data.modbus.access">^write$</field>
+    <description>Suricata: Modbus WRITE Operation Detected</description>
+    <group>modbus,pci_dss_10.2.2,gpg13_4.12,gdpr_IV_35.7.d,hipaa_164.312.b,nist_800_53_AU.14,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,</group>
+  </rule>
+
+  <!-- Modbus Read Reconnaissance Operation Detection -->
+  <rule id="100029" level="8">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature_id">^1000031$</field>  <!-- add this SID in Suricata too -->
+    <description>Suricata: Unauthorized Modbus READ from unknown source (possible recon)</description>
+    <group>modbus_recon,policy_violation,industrial_security,</group>
+  </rule><?xml version="1.0" encoding="UTF-8"?>
+<!-- ==========================================================
+     Improved Wazuh Custom Rules for Zero-Trust OT Lab
+     
+     ARCHITECTURE:
+     - Keycloak + Pomerium → Direct PLC identity auth
+     - Guacamole → EWS (Engineering Workstation) remote access only
+     - Suricata → Modbus OT traffic visibility
+     
+     FIXES APPLIED:
+     1. Keycloak rule ordering (LOGIN vs LOGIN_ERROR)
+     2. same_srcip on all frequency rules
+     3. Unauthorized Modbus reads (recon detection)
+     4. EWS + Modbus correlation (lateral movement)
+     5. Payload enrichment compliance tags
+     6. No false Guacamole→PLC assertions
+     ========================================================== -->
+
+<!-- ===================== MODBUS / SURICATA / OT ===================== -->
+<group name="modbus,suricata,ot_visibility,">
+
+  <!-- Modbus OT Visibility (low-noise READ alerts) -->
+  <rule id="100020" level="3">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature_id">^1000006$|^1000008$</field>
+    <description>Suricata: Modbus OT Visibility - $(alert.signature)</description>
+    <options>no_full_log</options>
+  </rule>
+
+  <!-- Modbus WRITE Command Detected (baseline) -->
+  <rule id="100021" level="5">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature_id">^1000001$|^1000002$|^1000003$|^1000004$</field>
+    <description>Suricata: Modbus WRITE Command - $(alert.signature)</description>
+    <group>modbus_write,industrial_security,</group>
+  </rule>
+
+  <!-- Modbus Payload Capture (enrichment child rule) -->
+  <rule id="100022" level="3">
+    <if_sid>100020,100021</if_sid>
+    <field name="payload_printable">.+</field>
+    <description>Suricata: Modbus Payload Captured - $(alert.signature)</description>
+    <group>ot_data_capture,pci_dss_10.2.2,nist_800_53_AU.9,gdpr_IV_35.7.d,</group>
+  </rule>
+
+  <!-- Reactor Pressure High Value Detection -->
+  <rule id="100025" level="12">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature_id">^1000010$|^1000011$</field>
+    <description>Suricata: HIGH REACTOR VALUE DETECTED - $(alert.signature)</description>
+    <group>modbus_anomaly,industrial_security,reactor_critical,</group>
+  </rule>
+
+  <!-- Reactor Pressure > 80% -->
+  <rule id="100026" level="10">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature_id">^1000020$</field>
+    <description>Suricata: ALERT - Reactor Pressure > 80%</description>
+    <group>modbus_anomaly,industrial_security,reactor_high,</group>
+  </rule>
+
+  <!-- Reactor Pressure > 95% (CRITICAL) -->
+  <rule id="100027" level="14">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature_id">^1000021$</field>
+    <description>Suricata: CRITICAL - Reactor Pressure > 95% (EXPLOSION RISK)</description>
+    <group>modbus_anomaly,industrial_security,reactor_critical,</group>
+  </rule>
+
+  <!-- Unauthorized Modbus WRITE Attempt -->
+  <rule id="100028" level="12">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature_id">^1000030$</field>
+    <description>Suricata: SECURITY VIOLATION - Unauthorized Modbus Write Attempt</description>
+    <group>modbus_write,policy_violation,industrial_security,intrusion_detection,</group>
+  </rule>
+
+  <!-- UNAUTHORIZED Modbus READ (Recon/Mapping) -->
+  <rule id="100029" level="8">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature_id">^1000031$</field>
+    <description>Suricata: ANOMALY - Unauthorized Modbus READ from unknown source (possible recon)</description>
+    <group>modbus_recon,policy_violation,industrial_security,intrusion_detection,</group>
+  </rule>
+
+  <!-- Modbus Transaction Visibility (all modbus events) -->
+  <rule id="100030" level="3">
+    <if_sid>86600</if_sid>
+    <field name="event_type">^modbus$</field>
+    <description>Suricata: Modbus Transaction [Func: $(modbus.function), Unit: $(modbus.unit_id)]</description>
+    <group>modbus_visibility,protocol_metadata,</group>
+  </rule>
+
+  <!-- Modbus WRITE Operation Detection (metadata) -->
+  <rule id="100031" level="3">
+    <if_sid>86600</if_sid>
+    <field name="event_type">^modbus$</field>
+    <field name="data.modbus.access">^write$</field>
+    <description>Suricata: Modbus WRITE Operation Detected</description>
+    <group>modbus,pci_dss_10.2.2,gpg13_4.12,gdpr_IV_35.7.d,hipaa_164.312.b,nist_800_53_AU.14,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,</group>
+  </rule>
+
+  <!-- PLC Management Console Admin Login -->
+  <rule id="100060" level="12">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature_id">^1000101$</field>
+    <description>PLC Management Console: Successful Admin Login Detected</description>
+    <group>industrial_security,plc_admin,access_critical,</group>
+  </rule>
+
+  <!-- MALICIOUS: Repeated unauthorized WRITE attempts (brute-force/attack) -->
+  <rule id="100032" level="14" frequency="3" timeframe="60">
+    <if_matched_sid>100028</if_matched_sid>
+    <same_srcip/>
+    <description>Suricata: ATTACK - Repeated Unauthorized Modbus Writes from $(srcip) (3+ in 60s)</description>
+    <group>modbus_attack,policy_violation,industrial_security,intrusion_detection,</group>
+  </rule>
+
+  <!-- MALICIOUS: Rapid reactor pressure escalation (sustained attack) -->
+  <rule id="100033" level="15" frequency="5" timeframe="120">
+    <if_matched_sid>100026</if_matched_sid>
+    <description>Suricata: ATTACK - Sustained High Reactor Pressure (possible manipulation)</description>
+    <group>modbus_attack,industrial_security,reactor_critical,</group>
+  </rule>
+
+  <!-- MALICIOUS: Multiple unauthorized read attempts (mapping attack) -->
+  <rule id="100034" level="12" frequency="10" timeframe="120">
+    <if_matched_sid>100029</if_matched_sid>
+    <same_srcip/>
+    <description>Suricata: ATTACK - Sustained Unauthorized Modbus Reads from $(srcip) (possible register mapping)</description>
+    <group>modbus_attack,industrial_security,intrusion_detection,recon,</group>
+  </rule>
+
+</group>
+
+<!-- ===================== SSH ===================== -->
+<group name="local,syslog,sshd,">
+  <rule id="100001" level="5">
+    <if_sid>5716</if_sid>
+    <description>sshd: authentication failed from IP $(srcip).</description>
+    <group>authentication_failed,pci_dss_10.2.4,pci_dss_10.2.5,</group>
+  </rule>
+
+  <!-- SSH brute-force from same source -->
+  <rule id="100002" level="10" frequency="5" timeframe="60">
+    <if_matched_sid>100001</if_matched_sid>
+    <same_srcip/>
+    <description>sshd: BRUTE FORCE - Multiple SSH auth failures from $(srcip)</description>
+    <group>authentication_failed,brute_force,pci_dss_11.4,</group>
+  </rule>
+</group>
+
+<!-- ===================== KEYCLOAK (IdP) ===================== -->
+<group name="keycloak,auth,">
+
+  <!-- Base rule: any Keycloak event -->
+  <rule id="100500" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="loggerName">org.keycloak.events</field>
+    <description>Keycloak event occurred</description>
+  </rule>
+
+  <!-- FAILED Login (check this FIRST - more specific pattern) -->
+  <rule id="100502" level="5">
+    <if_sid>100500</if_sid>
+    <field name="message">LOGIN_ERROR</field>
+    <description>Keycloak: User Login Failed - $(message)</description>
+    <group>authentication_failed,pci_dss_10.2.4,pci_dss_10.2.5,</group>
+  </rule>
+
+  <!-- SUCCESSFUL Login (only fires if LOGIN_ERROR didn't match) -->
+  <rule id="100501" level="3">
+    <if_sid>100500</if_sid>
+    <field name="message">type=LOGIN\b</field>
+    <description>Keycloak: User Login Successful</description>
+    <group>authentication_success,pci_dss_10.2.5,</group>
+  </rule>
+
+  <!-- Administrative Console Login -->
+  <rule id="100503" level="5">
+    <if_sid>100501</if_sid>
+    <field name="message">clientId=security-admin-console</field>
+    <description>Keycloak: Administrative Console Login - $(message)</description>
+    <group>admin_access,pci_dss_10.2.1,</group>
+  </rule>
+
+  <!-- IDENTITY-BASED PLC ACCESS (via Pomerium) -->
+  <rule id="100510" level="12">
+    <if_sid>100501</if_sid>
+    <field name="message">plc.localhost.pomerium.io</field>
+    <description>Keycloak: Direct Identity-Based PLC Access Granted to $(user) (Pomerium)</description>
+    <group>authentication_success,pomerium_access,plc_critical,pci_dss_10.2.1,</group>
+  </rule>
+
+  <!-- BRUTE FORCE: Multiple failed logins from same IP (5+ in 60s) -->
+  <rule id="100520" level="10" frequency="5" timeframe="60">
+    <if_matched_sid>100502</if_matched_sid>
+    <same_srcip/>
+    <description>Keycloak: BRUTE FORCE - Multiple failed logins from $(srcip) (5+ in 60s)</description>
+    <group>authentication_failed,brute_force,pci_dss_11.4,gdpr_IV_35.7.d,</group>
+  </rule>
+
+  <!-- CREDENTIAL STUFFING: Sustained login failure flood (10+ in 120s) -->
+  <rule id="100521" level="13" frequency="10" timeframe="120">
+    <if_matched_sid>100502</if_matched_sid>
+    <same_srcip/>
+    <description>Keycloak: CREDENTIAL STUFFING - Sustained login failures from $(srcip) (10+ in 120s)</description>
+    <group>authentication_failed,credential_stuffing,pci_dss_11.4,gdpr_IV_35.7.d,</group>
+  </rule>
+
+</group>
+
+<!-- ===================== GUACAMOLE (Remote Access to EWS only) ===================== -->
+<group name="guacamole,syslog,">
+
+  <!-- Base Guacamole event -->
+  <rule id="100100" level="0">
+    <decoded_as>guacamole</decoded_as>
+    <description>Guacamole events</description>
+  </rule>
+
+  <!-- Guacamole Login Success -->
+  <rule id="100101" level="3">
+    <if_sid>100100</if_sid>
+    <match>successfully authenticated</match>
+    <description>Guacamole: User $(user) authenticated successfully</description>
+    <group>authentication_success,pci_dss_10.2.5,gpg13_7.1,gdpr_IV_32.2,</group>
+  </rule>
+
+  <!-- Guacamole Login Failure -->
+  <rule id="100102" level="5">
+    <if_sid>100100</if_sid>
+    <match>Authentication failed|invalid login</match>
+    <description>Guacamole: User authentication failed - $(user)</description>
+    <group>authentication_failed,pci_dss_10.2.4,pci_dss_10.2.5,gpg13_7.1,gdpr_IV_35.7.d,hipaa_164.312.b,</group>
+  </rule>
+
+  <!-- Guacamole Brute-force Protection Triggered -->
+  <rule id="100105" level="7">
+    <if_sid>100100</if_sid>
+    <match>Blocking authentication attempt</match>
+    <description>Guacamole: Brute-force protection triggered for IP $(srcip)</description>
+    <group>authentication_failed,host_based,pci_dss_10.2.4,pci_dss_10.2.5,gpg13_7.1,gdpr_IV_35.7.d,hipaa_164.312.b,</group>
+  </rule>
+
+  <!-- Guacamole EWS Session Start -->
+  <rule id="100103" level="3">
+    <if_sid>100100</if_sid>
+    <match>connected to connection</match>
+    <description>Guacamole: User $(user) started EWS session: $(connection_name)</description>
+    <group>connection_start,audit,pci_dss_10.2.1,</group>
+  </rule>
+
+  <!-- Guacamole EWS Session End -->
+  <rule id="100104" level="3">
+    <if_sid>100100</if_sid>
+    <match>disconnected from connection</match>
+    <description>Guacamole: User $(user) ended EWS session: $(connection_name)</description>
+    <group>connection_end,audit,pci_dss_10.2.1,</group>
+  </rule>
+
+  <!-- BRUTE FORCE: Multiple failed logins (5+ in 60s) -->
+  <rule id="100110" level="10" frequency="5" timeframe="60">
+    <if_matched_sid>100102</if_matched_sid>
+    <same_srcip/>
+    <description>Guacamole: BRUTE FORCE - Multiple failed EWS logins from $(srcip) (5+ in 60s)</description>
+    <group>authentication_failed,brute_force,pci_dss_11.4,gdpr_IV_35.7.d,</group>
+  </rule>
+
+</group>
+
+<!-- ===================== CORRELATION & LATERAL MOVEMENT ===================== -->
+<group name="correlation,lateral_movement,industrial_security,">
+
+  <!-- EWS Session + Unauthorized Modbus Write (potential lateral movement from workstation to PLC) -->
+  <rule id="100200" level="13">
+    <if_matched_sid>100103,100028</if_matched_sid>
+    <same_srcip/>
+    <timeframe>300</timeframe>
+    <description>LATERAL MOVEMENT: Guacamole EWS session active + Unauthorized Modbus write from same IP</description>
+    <group>lateral_movement,plc_compromise,industrial_security,intrusion_detection,</group>
+  </rule>
+
+  <!-- Keycloak PLC Access + Unauthorized Write (compromised credential usage) -->
+  <rule id="100201" level="13">
+    <if_matched_sid>100510,100028</if_matched_sid>
+    <same_user/>
+    <timeframe>60</timeframe>
+    <description>CREDENTIAL ABUSE: User $(user) granted PLC access + Unauthorized Modbus write within 60s</description>
+    <group>credential_abuse,plc_compromise,industrial_security,intrusion_detection,</group>
+  </rule>
+
+  <!-- Keycloak PLC Access + Reactor Pressure Spike (possible authorized but anomalous activity) -->
+  <rule id="100202" level="12">
+    <if_matched_sid>100510,100026</if_matched_sid>
+    <same_user/>
+    <timeframe>120</timeframe>
+    <description>ANOMALY: User $(user) accessed PLC + High reactor pressure triggered within 120s</description>
+    <group>plc_anomaly,industrial_security,audit,</group>
+  </rule>
+
+  <!-- Multiple unauthorized reads followed by write (classic attack progression) -->
+  <rule id="100203" level="13">
+    <if_matched_sid>100029,100028</if_matched_sid>
+    <same_srcip/>
+    <timeframe>300</timeframe>
+    <description>ATTACK PROGRESSION: Unauthorized Modbus read (recon) followed by write from $(srcip) within 5min</description>
+    <group>modbus_attack,industrial_security,intrusion_detection,</group>
+  </rule>
+
+  <!-- Failed Keycloak login followed by successful Guacamole login (cred compromise indicator) -->
+  <rule id="100204" level="10">
+    <if_matched_sid>100502,100101</if_matched_sid>
+    <same_user/>
+    <timeframe>60</timeframe>
+    <description>SUSPICIOUS: User $(user) failed Keycloak login then succeeded in Guacamole within 60s (possible fallback attack)</description>
+    <group>credential_compromise,authentication_failed,industrial_security,</group>
+  </rule>
+
+</group>
+
+  <!-- PLC Management Console Admin Login -->
+  <rule id="100060" level="12">
+    <if_sid>86601</if_sid>
+    <field name="alert.signature_id">^1000101$</field>
+    <description>PLC Management Console: Successful Admin Login Detected</description>
+    <group>industrial_security,plc_admin,access_critical,</group>
+  </rule>
+
+  <!-- MALICIOUS: Repeated unauthorized write attempts (brute-force/attack) -->
+  <rule id="100032" level="14" frequency="3" timeframe="60">
+    <if_matched_sid>100028</if_matched_sid>
+    <description>Suricata: ATTACK - Repeated Unauthorized Modbus Write Attempts (3+ in 60s)</description>
+    <group>modbus_attack,policy_violation,industrial_security,intrusion_detection,</group>
+  </rule>
+
+  <!-- MALICIOUS: Rapid reactor pressure escalation (attack scenario) -->
+  <rule id="100033" level="15" frequency="5" timeframe="120">
+    <if_matched_sid>100026</if_matched_sid>
+    <description>Suricata: ATTACK - Sustained High Reactor Pressure (possible manipulation)</description>
+    <group>modbus_attack,industrial_security,reactor_critical,</group>
+  </rule>
+
+</group>
+
+
+<!-- ===================== KEYCLOAK ===================== -->
+<group name="keycloak,auth,">
+
+  <!-- Base rule: any Keycloak event -->
+  <rule id="100500" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="loggerName">org.keycloak.events</field>
+    <description>Keycloak event occurred</description>
+  </rule>
+
+  <!-- Successful Login (must come AFTER LOGIN_ERROR to avoid false match) -->
+  <rule id="100502" level="5">
+    <if_sid>100500</if_sid>
+    <field name="message">LOGIN_ERROR</field>
+    <description>Keycloak: User Login Failed</description>
+    <group>authentication_failed,pci_dss_10.2.4,pci_dss_10.2.5,</group>
+  </rule>
+
+  <!-- Successful Login (only fires if LOGIN_ERROR didn't match first) -->
+  <rule id="100501" level="3">
+    <if_sid>100500</if_sid>
+    <field name="message">type=</field>
+    <description>Keycloak: User Login Event</description>
+    <group>authentication_success,pci_dss_10.2.5,</group>
+  </rule>
+
+  <!-- Administrative Login -->
+  <rule id="100503" level="5">
+    <if_sid>100501</if_sid>
+    <field name="message">clientId=admin</field>
+    <description>Keycloak: Administrative Login Successful</description>
+    <group>admin_access,</group>
+  </rule>
+
+  <!-- Identity-Based Login for PLC Access -->
+  <rule id="100510" level="12">
+    <if_sid>100501</if_sid>
+    <field name="message">plc.localhost.pomerium.io</field>
+    <description>Keycloak: Successful Identity-Based Login for PLC Access (Pomerium)</description>
+    <group>authentication_success,pomerium_access,plc_critical,</group>
+  </rule>
+
+  <!-- MALICIOUS: Brute-force login attempts (5+ failures in 60s) -->
+  <rule id="100520" level="10" frequency="5" timeframe="60">
+    <if_matched_sid>100502</if_matched_sid>
+    <description>Keycloak: BRUTE FORCE DETECTED - Multiple failed login attempts</description>
+    <group>authentication_failed,brute_force,pci_dss_11.4,gdpr_IV_35.7.d,</group>
+  </rule>
+
+  <!-- MALICIOUS: Credential stuffing (10+ failures in 120s) -->
+  <rule id="100521" level="13" frequency="10" timeframe="120">
+    <if_matched_sid>100502</if_matched_sid>
+    <description>Keycloak: CREDENTIAL STUFFING - Sustained login failure flood</description>
+    <group>authentication_failed,credential_stuffing,pci_dss_11.4,gdpr_IV_35.7.d,</group>
+  </rule>
+
+</group>
+
+<!-- ===================== GUACAMOLE ===================== -->
+<group name="guacamole,syslog,">
+
+  <!-- Base Guacamole event -->
+  <rule id="100100" level="0">
+    <decoded_as>guacamole</decoded_as>
+    <description>Guacamole events</description>
+  </rule>
+
+  <!-- Guacamole Login Success -->
+  <rule id="100101" level="3">
+    <if_sid>100100</if_sid>
+    <match>successfully authenticated</match>
+    <description>Guacamole: User authenticated successfully: $(user)</description>
+    <group>authentication_success,pci_dss_10.2.5,gpg13_7.1,gdpr_IV_32.2,</group>
+  </rule>
+
+  <!-- Guacamole Login Failure -->
+  <rule id="100102" level="5">
+    <if_sid>100100</if_sid>
+    <match>Authentication failed|invalid login</match>
+    <description>Guacamole: User authentication failed: $(user)</description>
+    <group>authentication_failed,pci_dss_10.2.4,pci_dss_10.2.5,gpg13_7.1,gdpr_IV_35.7.d,hipaa_164.312.b,</group>
+  </rule>
+
+  <!-- Guacamole Brute-force Protection Triggered -->
+  <rule id="100105" level="7">
+    <if_sid>100100</if_sid>
+    <match>Blocking authentication attempt</match>
+    <description>Guacamole: Brute-force protection triggered for IP: $(srcip)</description>
+    <group>authentication_failed,host_based,pci_dss_10.2.4,pci_dss_10.2.5,gpg13_7.1,gdpr_IV_35.7.d,hipaa_164.312.b,</group>
+  </rule>
+
+  <!-- Guacamole Session Start -->
+  <rule id="100103" level="3">
+    <if_sid>100100</if_sid>
+    <match>connected to connection</match>
+    <description>Guacamole: User $(user) started session: $(connection_name)</description>
+    <group>connection_start,audit,</group>
+  </rule>
+
+  <!-- Guacamole Session End -->
+  <rule id="100104" level="3">
+    <if_sid>100100</if_sid>
+    <match>disconnected from connection</match>
+    <description>Guacamole: User $(user) ended session: $(connection_name)</description>
+    <group>connection_end,audit,</group>
+  </rule>
+
+  <!-- MALICIOUS: Guacamole brute-force (5+ failures in 60s) -->
+  <rule id="100110" level="10" frequency="5" timeframe="60">
+    <if_matched_sid>100102</if_matched_sid>
+    <description>Guacamole: BRUTE FORCE DETECTED - Multiple failed login attempts</description>
+    <group>authentication_failed,brute_force,pci_dss_11.4,gdpr_IV_35.7.d,</group>
+  </rule>
+
+</group>

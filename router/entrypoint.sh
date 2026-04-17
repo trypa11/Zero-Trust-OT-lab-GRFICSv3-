@@ -6,13 +6,10 @@ cat << 'EOT' > /tmp/suricata-af-packet.yaml
 af-packet:
 EOT
 
-# We monitor both the Supervisory (97.0) and Control (95.0) subnets for full flow visibility
-# Use 'ip route get' to find the actual interface for a known IP in that subnet
-S_IFACE=$(ip -4 route get 192.168.96.10 | awk '{print $3}' | head -n 1)
-C_IFACE=$(ip -4 route get 192.168.95.2 | awk '{print $3}' | head -n 1)
-
+# Detect all internal interfaces (typically eth1-eth5 in this lab)
+# We exclude eth0 as it is usually the management bridge
 ID=1
-for IFACE in "$S_IFACE" "$C_IFACE"; do
+for IFACE in $(ls /sys/class/net | grep "^eth" | grep -v "eth0"); do
     if [ -n "$IFACE" ] && [ "$IFACE" != "lo" ]; then
         # Each interface gets its own UNIQUE cluster-id to avoid kernel fanout errors
         cat << EOF >> /tmp/suricata-af-packet.yaml

@@ -1,0 +1,28 @@
+<decoder name="guacamole">
+  <program_name>^guacamole$</program_name>
+</decoder>
+
+<!-- Robust Login Failure Decoder -->
+<decoder name="guacamole-login-failure">
+  <parent>guacamole</parent>
+  <regex>Authentication attempt from (\S+) for user "(\S+)" (\w+):</regex>
+  <order>srcip, user, status</order>
+</decoder>
+
+<decoder name="guacamole-login-success">
+  <parent>guacamole</parent>
+  <regex>User "(\S+)" successfully authenticated from (\S+)\.</regex>
+  <order>user, srcip</order>
+</decoder>
+
+<decoder name="guacamole-blocking">
+  <parent>guacamole</parent>
+  <regex>Blocking authentication attempt from address "(\S+)"</regex>
+  <order>srcip</order>
+</decoder>
+
+<decoder name="guacamole-connection">
+  <parent>guacamole</parent>
+  <regex>User "(\S+)" connected to connection "(\S+)"\.</regex>
+  <order>user, connection_name</order>
+</decoder>

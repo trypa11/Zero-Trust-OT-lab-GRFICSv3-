@@ -13,8 +13,7 @@ services:
     networks:
       b-basic-control-net:
         ipv4_address: 192.168.95.10
-    volumes:
-      - /var/log/wazuh
+
     # Optional if you want to override default CMD
     # command: sh -c "./simulation/simulation & cd modbus && ./run_all.sh"
 
@@ -81,8 +80,6 @@ services:
     sysctls:
       net.ipv4.conf.default.arp_announce: 2
       net.ipv4.conf.all.arp_announce: 2
-    volumes:
-      - /var/log/wazuh
 
   router:
     image: fortiphyd/grfics-router
@@ -91,9 +88,11 @@ services:
     build: ./router
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "bash", "-c", "ip route | grep -q 192.168.95.0 || exit 1"]
-      interval: 5s
-      retries: 5
+      test: ["CMD", "bash", "-c", "curl -f http://localhost:5000/ || exit 1; ip addr | grep -q 192.168.90.1 || exit 1; iptables -L FORWARD | grep -q LOGDROP || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     cap_add:
       - NET_ADMIN
       - NET_RAW
@@ -104,6 +103,7 @@ services:
       - ROUTER_ADMIN_USER=${ROUTER_ADMIN_USER}
       - ROUTER_ADMIN_PASSWORD=${ROUTER_ADMIN_PASSWORD}
     volumes:
+      - ./router/setup-firewall.sh:/setup-firewall.sh:ro
       - router_config:/etc/firewall
       - /var/log/wazuh
       - keycloak_logs:/var/log/keycloak
@@ -196,26 +196,111 @@ services:
     network_mode: "service:pomerium"
     cap_add:
       - NET_ADMIN
-    command: sh -c "sleep 2 && ip route replace default via 192.168.90.1 dev eth1 && tail -f /dev/null"
+    command: sh -c "sleep 2 && ip route replace default via 192.168.90.1 dev eth0 && ip route del 192.168.90.0/24 dev eth0 2>/dev/null || true && tail -f /dev/null"
     restart: always
     depends_on:
       pomerium:
         condition: service_started
-  nexterm:
-    image: germannewsmaker/nexterm:latest
-    container_name: nexterm
-    hostname: nexterm
+#  nexterm:
+#    image: germannewsmaker/nexterm:latest
+#    container_name: nexterm
+#    hostname: nexterm
+#    restart: always
+#    cap_add:
+#      - NET_ADMIN
+#    entrypoint: ["sh", "-c", "syslogd -R 192.168.100.51:514 && exec /usr/local/bin/docker-entrypoint.sh /bin/sh docker-start.sh"]
+#    environment:
+#      - ENCRYPTION_KEY=${NEXTERM_ENCRYPTION_KEY}
+#    volumes:
+#      - nexterm:/app/data
+#    networks:
+#      idmz-net:
+#        ipv4_address: 192.168.90.22
+
+  guacamole_db:
+    image: postgres:15-alpine
+    container_name: guacamole_db
     restart: always
+    environment:
+      POSTGRES_DB: guacamole_db
+      POSTGRES_USER: guacamole_user
+      POSTGRES_PASSWORD: ${GUACAMOLE_DB_PASSWORD}
+    volumes:
+      - ./guacamole/init/initdb.sql:/docker-entrypoint-initdb.d/initdb.sql:ro
+      - guac_db_data:/var/lib/postgresql/data
+    networks:
+      idmz-net:
+        ipv4_address: 192.168.90.24
+
+  guacamole-db-route-fixer:
+    image: alpine:latest
+    container_name: guacamole_db_route_fixer
+    network_mode: "service:guacamole_db"
     cap_add:
       - NET_ADMIN
-    entrypoint: ["sh", "-c", "syslogd -R 192.168.100.51:514 && exec /usr/local/bin/docker-entrypoint.sh /bin/sh docker-start.sh"]
-    environment:
-      - ENCRYPTION_KEY=${NEXTERM_ENCRYPTION_KEY}
+    command: sh -c "sleep 2 && ip route del 192.168.90.0/24 dev eth0 2>/dev/null || true && tail -f /dev/null"
+    restart: always
+    depends_on:
+      guacamole_db:
+        condition: service_started
+
+  guacd:
+    image: guacamole/guacd:latest
+    container_name: guacd
+    restart: always
     volumes:
-      - nexterm:/app/data
+      - ./guacamole/recordings:/var/lib/guacamole/recordings:rw
+    networks:
+      idmz-net:
+        ipv4_address: 192.168.90.23
+
+  guacd-route-fixer:
+    image: alpine:latest
+    container_name: guacd_route_fixer
+    network_mode: "service:guacd"
+    cap_add:
+      - NET_ADMIN
+    command: sh -c "sleep 2 && ip route del 192.168.90.0/24 dev eth0 2>/dev/null || true && tail -f /dev/null"
+    restart: always
+    depends_on:
+      guacd:
+        condition: service_started
+
+  guacamole:
+    image: guacamole/guacamole:latest
+    container_name: guacamole
+    hostname: guacamole
+    restart: always
+    environment:
+      POSTGRESQL_HOSTNAME: 192.168.90.24
+      POSTGRESQL_DATABASE: guacamole_db
+      POSTGRESQL_USERNAME: guacamole_user
+      POSTGRESQL_PASSWORD: ${GUACAMOLE_DB_PASSWORD}
+      GUACD_HOSTNAME: 192.168.90.23
+      RECORDING_SEARCH_PATH: /var/lib/guacamole/recordings
+      WEBAPP_CONTEXT: ROOT
+    volumes:
+      - ./guacamole/recordings:/var/lib/guacamole/recordings:ro
+      - ./guacamole/extensions:/home/guacamole/.guacamole/extensions
+      - ./guacamole/logback.xml:/etc/guacamole/logback.xml:ro
+    depends_on:
+      - guacamole_db
+      - guacd
     networks:
       idmz-net:
         ipv4_address: 192.168.90.22
+
+  guacamole-route-fixer:
+    image: alpine:latest
+    container_name: guacamole_route_fixer
+    network_mode: "service:guacamole"
+    cap_add:
+      - NET_ADMIN
+    command: sh -c "sleep 2 && ip route del 192.168.90.0/24 dev eth0 2>/dev/null || true && tail -f /dev/null"
+    restart: always
+    depends_on:
+      guacamole:
+        condition: service_started
 
 
   # --- Wazuh SIEM Stack ---
@@ -374,6 +459,7 @@ networks:
   a-grfics-admin:
     driver: bridge
 
+
 volumes:
   scadalts_db:
     name: scadalts_db
@@ -382,6 +468,7 @@ volumes:
   router_config:
     name: router_config
   nexterm:
+  guac_db_data:
   keycloak_data:
   keycloak_logs:
   wazuh_api_configuration:

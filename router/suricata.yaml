@@ -263,7 +263,7 @@ outputs:
             # to yes
             #md5: [body, subject]
 
-        - modbus:
+        # - modbus:
         - ftp:
         - rdp:
         - nfs:

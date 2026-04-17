@@ -16,13 +16,6 @@
   </rule>
 
 
-  <!-- NEW VISIBILITY RULE: Ensure data.modbus object is captured -->
-  <rule id="100030" level="3">
-    <if_sid>86600</if_sid>
-    <field name="event_type">^modbus$</field>
-    <description>Suricata: Modbus Transaction [Func: $(modbus.function), Unit: $(modbus.unit_id)]</description>
-    <group>modbus_visibility,protocol_metadata,</group>
-  </rule>
 
   <!-- CRITICAL: PLC Management Console Login Successful (Suricata Escalation) -->
   <rule id="100060" level="12">

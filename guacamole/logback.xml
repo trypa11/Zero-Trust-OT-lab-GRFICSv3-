@@ -1,0 +1,24 @@
+<configuration>
+
+    <!-- Appender for Syslog -->
+    <appender name="SYSLOG" class="ch.qos.logback.classic.net.SyslogAppender">
+        <syslogHost>192.168.100.51</syslogHost>
+        <port>514</port>
+        <facility>USER</facility>
+        <suffixPattern>guacamole: [%thread] %logger %msg</suffixPattern>
+    </appender>
+
+    <!-- Standard Console Appender (keep for docker logs) -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Root Logger -->
+    <root level="info">
+        <appender-ref ref="SYSLOG" />
+        <appender-ref ref="CONSOLE" />
+    </root>
+
+</configuration>

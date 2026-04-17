@@ -42,7 +42,9 @@ WAZUH_MNGR="192.168.100.51"
 WAZUH_DASH="192.168.100.50"
 KEYCLOAK_IP="192.168.100.20"
 POMERIUM_IP="192.168.90.21"
-NEXTERM_IP="192.168.90.22"
+GUAC_WEB_IP="192.168.90.22"
+GUACD_IP="192.168.90.23"
+GUAC_DB_IP="192.168.90.24"
 
 cat <<EOF > "$CONFIG_PATH"
 {
@@ -54,19 +56,19 @@ cat <<EOF > "$CONFIG_PATH"
     { "iface_in": "$IF_MANOPS", "iface_out": "$IF_ENTERPRISE", "src": "192.168.97.0/24", "dst": "$WAZUH_MNGR", "proto": "tcp", "dport": "1515", "action": "ACCEPT" },
     { "iface_in": "$IF_IDMZ", "iface_out": "$IF_ENTERPRISE", "src": "192.168.90.0/24", "dst": "$WAZUH_MNGR", "proto": "tcp", "dport": "1515", "action": "ACCEPT" },
     { "iface_in": "$IF_SUPERVISORY", "iface_out": "$IF_CONTROL", "src": "$HMI_IP", "dst": "$PLC_IP", "proto": "tcp", "dport": "502", "action": "ACCEPT" },
-    { "iface_in": "$IF_IDMZ", "iface_out": "$IF_ENTERPRISE", "src": "$POMERIUM_IP", "dst": "$WAZUH_DASH", "proto": "tcp", "dport": "443", "action": "ACCEPT" },
     { "iface_in": "$IF_IDMZ", "iface_out": "$IF_SUPERVISORY", "src": "$POMERIUM_IP", "dst": "$HMI_IP", "proto": "tcp", "dport": "8080", "action": "ACCEPT" },
     { "iface_in": "$IF_IDMZ", "iface_out": "$IF_CONTROL", "src": "$POMERIUM_IP", "dst": "$PLC_IP", "proto": "tcp", "dport": "8080", "action": "ACCEPT" },
     { "iface_in": "$IF_IDMZ", "iface_out": "$IF_ENTERPRISE", "src": "$POMERIUM_IP", "dst": "$KEYCLOAK_IP", "proto": "tcp", "dport": "8080", "action": "ACCEPT" },
     { "iface_in": "$IF_IDMZ", "iface_out": "$IF_CONTROL", "src": "$POMERIUM_IP", "dst": "$SIM_IP", "proto": "tcp", "dport": "80", "action": "ACCEPT" },
-    { "iface_in": "$IF_IDMZ", "iface_out": "$IF_MANOPS", "src": "$NEXTERM_IP", "dst": "$EWS_IP", "proto": "tcp", "dport": "6080", "action": "ACCEPT" },
-    { "iface_in": "$IF_IDMZ", "iface_out": "$IF_MANOPS", "src": "$NEXTERM_IP", "dst": "$EWS_IP", "proto": "tcp", "dport": "5900", "action": "ACCEPT" },
+    { "iface_in": "$IF_IDMZ", "iface_out": "$IF_IDMZ", "src": "$POMERIUM_IP", "dst": "$GUAC_WEB_IP", "proto": "tcp", "dport": "8080", "action": "ACCEPT" },
+    { "iface_in": "$IF_IDMZ", "iface_out": "$IF_IDMZ", "src": "$GUAC_WEB_IP", "dst": "$GUACD_IP", "proto": "tcp", "dport": "4822", "action": "ACCEPT" },
+    { "iface_in": "$IF_IDMZ", "iface_out": "$IF_IDMZ", "src": "$GUAC_WEB_IP", "dst": "$GUAC_DB_IP", "proto": "tcp", "dport": "5432", "action": "ACCEPT" },
     { "iface_in": "$IF_MANOPS", "iface_out": "$IF_IDMZ", "src": "$EWS_IP", "dst": "$POMERIUM_IP", "proto": "tcp", "dport": "443", "action": "ACCEPT" },
     { "iface_in": "$IF_MANOPS", "iface_out": "$IF_ENTERPRISE", "src": "$EWS_IP", "dst": "$KEYCLOAK_IP", "proto": "tcp", "dport": "8080", "action": "ACCEPT" },
-    { "iface_in": "$IF_IDMZ", "iface_out": "$IF_MANOPS", "src": "$NEXTERM_IP", "dst": "$EWS_IP", "proto": "tcp", "dport": "22", "action": "ACCEPT" },
-    { "iface_in": "$IF_IDMZ", "iface_out": "$IF_MANOPS", "src": "$NEXTERM_IP", "dst": "$EWS_IP", "proto": "tcp", "dport": "22", "action": "ACCEPT" },
-    { "iface_in": "$IF_IDMZ", "iface_out": "$IF_MANOPS", "src": "$NEXTERM_IP", "dst": "$EWS_IP", "proto": "tcp", "dport": "3389", "action": "ACCEPT" },
-    { "iface_in": "$IF_IDMZ", "iface_out": "$IF_ENTERPRISE", "src": "$NEXTERM_IP", "dst": "$WAZUH_MNGR", "proto": "udp", "dport": "514", "action": "ACCEPT" }
+    { "iface_in": "$IF_IDMZ", "iface_out": "$IF_MANOPS", "src": "$GUACD_IP", "dst": "$EWS_IP", "proto": "tcp", "dport": "5900", "action": "ACCEPT" },
+    { "iface_in": "$IF_IDMZ", "iface_out": "$IF_MANOPS", "src": "$GUACD_IP", "dst": "$EWS_IP", "proto": "tcp", "dport": "22", "action": "ACCEPT" },
+    { "iface_in": "$IF_IDMZ", "iface_out": "$IF_MANOPS", "src": "$GUACD_IP", "dst": "$EWS_IP", "proto": "tcp", "dport": "3389", "action": "ACCEPT" },
+    { "iface_in": "$IF_IDMZ", "iface_out": "$IF_ENTERPRISE", "src": "$GUAC_WEB_IP", "dst": "$WAZUH_MNGR", "proto": "udp", "dport": "514", "action": "ACCEPT" }
   ],
   "auth": { "username": "${ROUTER_ADMIN_USER}", "password": "${ROUTER_ADMIN_PASSWORD}" }
 }
@@ -89,16 +91,19 @@ cat <<EOF > "$RULES_PATH"
 -A FORWARD -i $IF_MANOPS -o $IF_ENTERPRISE -p tcp -s 192.168.97.0/24 -d $WAZUH_MNGR --dport 1515 -j ACCEPT
 -A FORWARD -i $IF_IDMZ -o $IF_ENTERPRISE -p tcp -s 192.168.90.0/24 -d $WAZUH_MNGR --dport 1515 -j ACCEPT
 -A FORWARD -i $IF_SUPERVISORY -o $IF_CONTROL -p tcp -s $HMI_IP -d $PLC_IP --dport 502 -j ACCEPT
--A FORWARD -i $IF_IDMZ -o $IF_ENTERPRISE -p tcp -s $POMERIUM_IP -d $WAZUH_DASH --dport 443 -j ACCEPT
 -A FORWARD -i $IF_IDMZ -o $IF_SUPERVISORY -p tcp -s $POMERIUM_IP -d $HMI_IP --dport 8080 -j ACCEPT
 -A FORWARD -i $IF_IDMZ -o $IF_CONTROL -p tcp -s $POMERIUM_IP -d $PLC_IP --dport 8080 -j ACCEPT
 -A FORWARD -i $IF_IDMZ -o $IF_ENTERPRISE -p tcp -s $POMERIUM_IP -d $KEYCLOAK_IP --dport 8080 -j ACCEPT
 -A FORWARD -i $IF_IDMZ -o $IF_CONTROL -p tcp -s $POMERIUM_IP -d $SIM_IP --dport 80 -j ACCEPT
--A FORWARD -i $IF_IDMZ -o $IF_MANOPS -p tcp -s $NEXTERM_IP -d $EWS_IP --dport 5900 -j ACCEPT
+-A FORWARD -i $IF_IDMZ -o $IF_IDMZ -p tcp -s $POMERIUM_IP -d $GUAC_WEB_IP --dport 8080 -j ACCEPT
+-A FORWARD -i $IF_IDMZ -o $IF_IDMZ -p tcp -s $GUAC_WEB_IP -d $GUACD_IP --dport 4822 -j ACCEPT
+-A FORWARD -i $IF_IDMZ -o $IF_IDMZ -p tcp -s $GUAC_WEB_IP -d $GUAC_DB_IP --dport 5432 -j ACCEPT
 -A FORWARD -i $IF_MANOPS -o $IF_IDMZ -p tcp -s $EWS_IP -d $POMERIUM_IP --dport 443 -j ACCEPT
 -A FORWARD -i $IF_MANOPS -o $IF_ENTERPRISE -p tcp -s $EWS_IP -d $KEYCLOAK_IP --dport 8080 -j ACCEPT
--A FORWARD -i $IF_IDMZ -o $IF_MANOPS -p tcp -s $NEXTERM_IP -d $EWS_IP --dport 22 -j ACCEPT
--A FORWARD -i $IF_IDMZ -o $IF_ENTERPRISE -p udp -s $NEXTERM_IP -d $WAZUH_MNGR --dport 514 -j ACCEPT
+-A FORWARD -i $IF_IDMZ -o $IF_MANOPS -p tcp -s $GUACD_IP -d $EWS_IP --dport 5900 -j ACCEPT
+-A FORWARD -i $IF_IDMZ -o $IF_MANOPS -p tcp -s $GUACD_IP -d $EWS_IP --dport 22 -j ACCEPT
+-A FORWARD -i $IF_IDMZ -o $IF_MANOPS -p tcp -s $GUACD_IP -d $EWS_IP --dport 3389 -j ACCEPT
+-A FORWARD -i $IF_IDMZ -o $IF_ENTERPRISE -p udp -s $GUAC_WEB_IP -d $WAZUH_MNGR --dport 514 -j ACCEPT
 -A FORWARD -j LOGDROP
 COMMIT
 EOF

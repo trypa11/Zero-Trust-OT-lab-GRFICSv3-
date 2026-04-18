@@ -1,0 +1,148 @@
+==== SCENARIO A: Network & Protocol Reconnaissance Audit ====
+[*] Step 1: Auditing Enterprise Zone (SIEM & Identity)...
+  [TIME] Action started at: 2026-04-18 18:00:06.122
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-18 18:00 +0000
+Nmap scan report for zero-trust-ot-lab-wazuh.dashboard-1.zero-trust-ot-lab_e-enterprise-net (192.168.100.50)
+Host is up (0.000043s latency).
+
+PORT      STATE  SERVICE
+443/tcp   closed https
+1514/tcp  closed fujitsu-dtcns
+1515/tcp  closed ifor-protocol
+8080/tcp  closed http-proxy
+55000/tcp closed unknown
+MAC Address: D6:A0:AD:9B:50:34 (Unknown)
+
+Nmap scan report for zero-trust-ot-lab-wazuh.manager-1.zero-trust-ot-lab_e-enterprise-net (192.168.100.51)
+Host is up (0.000023s latency).
+
+PORT      STATE  SERVICE
+443/tcp   closed https
+1514/tcp  open   fujitsu-dtcns
+1515/tcp  open   ifor-protocol
+8080/tcp  closed http-proxy
+55000/tcp open   unknown
+MAC Address: 3A:C5:CB:41:3A:C6 (Unknown)
+
+Nmap scan report for keycloak.zero-trust-ot-lab_e-enterprise-net (192.168.100.20)
+Host is up (0.000022s latency).
+
+PORT      STATE  SERVICE
+443/tcp   closed https
+1514/tcp  closed fujitsu-dtcns
+1515/tcp  closed ifor-protocol
+8080/tcp  open   http-proxy
+55000/tcp closed unknown
+MAC Address: B2:67:3A:1D:09:3F (Unknown)
+
+Nmap done: 3 IP addresses (3 hosts up) scanned in 0.21 seconds
+
+[*] Step 2: Auditing IDMZ Zone (Proxies & Gateways)...
+  [TIME] Action started at: 2026-04-18 18:00:06.367
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-18 18:00 +0000
+Nmap scan report for 192.168.90.21 (192.168.90.21)
+Host is up.
+
+PORT     STATE    SERVICE
+80/tcp   filtered http
+443/tcp  filtered https
+8080/tcp filtered http-proxy
+
+Nmap scan report for 192.168.90.22 (192.168.90.22)
+Host is up.
+
+PORT     STATE    SERVICE
+80/tcp   filtered http
+443/tcp  filtered https
+8080/tcp filtered http-proxy
+
+Nmap done: 2 IP addresses (2 hosts up) scanned in 4.19 seconds
+
+[*] Step 3: Auditing Level 3 Ops Connectivity (EWS)...
+  [TIME] Action started at: 2026-04-18 18:00:10.584
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-18 18:00 +0000
+Nmap scan report for 192.168.97.5 (192.168.97.5)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+3389/tcp filtered ms-wbt-server
+
+Nmap done: 1 IP address (1 host up) scanned in 3.08 seconds
+
+[*] Step 3: Auditing Level 2 Supervisory Connectivity (HMI)...
+  [TIME] Action started at: 2026-04-18 18:00:13.696
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-18 18:00 +0000
+Nmap scan report for 192.168.96.10 (192.168.96.10)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+3389/tcp filtered ms-wbt-server
+8080/tcp filtered http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 3.07 seconds
+
+[*] Step 4: Auditing Level 1/0 Control Connectivity (PLC)...
+  [TIME] Action started at: 2026-04-18 18:00:16.791
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-18 18:00 +0000
+Nmap scan report for 192.168.95.2 (192.168.95.2)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+502/tcp  filtered mbap
+8080/tcp filtered http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 3.07 seconds
+
+[*] Step 5: Launching Mdbget (Modbus Scan) to extract PLC registers...
+  [TIME] Action started at: 2026-04-18 18:00:19.886
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+[*] [1/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [2/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [3/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [4/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [5/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[+] Audit and Reconnaissance complete. Verify that 'Filtered' results correspond to SIEM 'FW DROP' logs.
+
+==== SCENARIO B: Sabotage via False Data Injection (FDI) ====
+[*] Step 1: Threat attempts direct Modbus write to PLC...
+  [TIME] Action started at: 2026-04-18 18:00:37.180
+Connection to (192.168.95.2, 502) failed: timed out
+[*] [1/1] Executing False Data Injection (FDI) on Register 2 with Value 32000...
+[-] Failed to connect to PLC.
+[+] Sabotage complete. Check Wazuh for rules 100026, 100027, 100028.
+
+==== SCENARIO C: Defense Evasion & Lateral Movement ====
+[*] Step 1: User authenticates to Guacamole normally (simulate connection start)...
+[*] Step 2: Internal threat modifies PLC code on EWS (simulate FIM alert)...
+  [!] Note: You must run the EWS modification from the host machine or use SSH from Kali if configured.
+  [!] To manually trigger FIM, run this on the host: docker exec EWS bash -c 'echo "malicious" >> /home/engineer/Desktop/chemical.st'
+[*] Step 3: Threat attempts direct Modbus write to PLC...
+  [TIME] Action started at: 2026-04-18 18:00:40.399
+Connection to (192.168.95.2, 502) failed: timed out
+[*] [1/1] Executing False Data Injection (FDI) on Register 2 with Value 32000...
+[-] Failed to connect to PLC.
+[+] Lateral Movement complete. Check Wazuh for rules 100200, Syscheck (FIM) and Modbus rules.
+
+==== SCENARIO D: Identity Brute Force ====
+[*] Simulating Keycloak brute force attack...
+  [TIME] Action started at: 2026-04-18 18:00:43.648
+[+] Keycloak Brute Force complete. Check Wazuh for rules 100502, 100520, 100521.
+

@@ -2,8 +2,8 @@
 
 
 # Dissertation Scenarios: Reactor Pressure Thresholds
-alert tcp 192.168.95.2 502 -> any any (msg:"OT: HIGH ALERT - Reactor Pressure > 80% (52428)"; modbus: access read, address 108, value >52428; classtype: industrial-protocol-anomaly; sid:1000020; rev:2;)
-alert tcp 192.168.95.2 502 -> any any (msg:"OT: SOC CRITICAL - Reactor Pressure > 95% (62258)"; modbus: access read, address 108, value >62258; classtype: fatal-error; sid:1000021; rev:2;)
+alert tcp 192.168.95.2 502 -> any any (msg:"OT: HIGH ALERT - Reactor Pressure > 80% (52428)"; modbus: address 108, access read; modbus: value >52428; classtype: industrial-protocol-anomaly; sid:1000020; rev:3;)
+alert tcp 192.168.95.2 502 -> any any (msg:"OT: SOC CRITICAL - Reactor Pressure > 95% (62258)"; modbus: address 108, access read; modbus: value >62258; classtype: fatal-error; sid:1000021; rev:3;)
 
 # Defense-in-Depth: Unauthorized Modbus Writing
 alert tcp !192.168.96.10 any -> 192.168.95.2 502 (msg:"OT: SECURITY VIOLATION - Unauthorized Modbus Write Attempt"; modbus: access write; classtype: attempted-admin; sid:1000030; rev:1;)
@@ -11,3 +11,9 @@ alert tcp !192.168.96.10 any -> 192.168.95.2 502 (msg:"OT: SECURITY VIOLATION - 
 # OpenPLC Web UI Login Detection
 alert http any any -> 192.168.95.2 8080 (msg:"PLC: OpenPLC Login Attempt"; flow:established,to_server; content:"POST"; http_method; content:"/login"; http_uri; flowbits:set,plc.login.attempt; noalert; sid:1000100; rev:1;)
 alert http 192.168.95.2 8080 -> any any (msg:"PLC: OpenPLC Management Console Successful Login"; flow:established,from_server; content:"Location: /dashboard"; http_header; flowbits:isset,plc.login.attempt; classtype:successful-admin; sid:1000101; rev:2;)
+
+# Unauthorized Nmap / OS Scan detection
+alert tcp 192.168.100.0/24 any -> [192.168.95.0/24,192.168.96.0/24,192.168.97.0/24] any (msg:"OT: Network Scan Reconnaissance Detected - Nmap Probes"; flags:S; threshold: type limit, track by_src, count 1, seconds 60; classtype:attempted-recon; sid:1000041; rev:3;)
+
+# Unauthorized Modbus Read (Recon)
+alert tcp 192.168.100.0/24 any -> 192.168.95.2 502 (msg:"OT: SECURITY VIOLATION - Unauthorized Modbus Access Attempt (Recon)"; flow:established,to_server; threshold: type limit, track by_src, count 1, seconds 60; classtype:attempted-recon; sid:1000031; rev:3;)

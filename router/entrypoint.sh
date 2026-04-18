@@ -6,10 +6,9 @@ cat << 'EOT' > /tmp/suricata-af-packet.yaml
 af-packet:
 EOT
 
-# Detect all internal interfaces (typically eth1-eth5 in this lab)
-# We exclude eth0 as it is usually the management bridge
+# Detect all internal interfaces (typically eth0-eth5 in this lab)
 ID=1
-for IFACE in $(ls /sys/class/net | grep "^eth" | grep -v "eth0"); do
+for IFACE in $(ls /sys/class/net | grep "^eth"); do
     if [ -n "$IFACE" ] && [ "$IFACE" != "lo" ]; then
         # Each interface gets its own UNIQUE cluster-id to avoid kernel fanout errors
         cat << EOF >> /tmp/suricata-af-packet.yaml

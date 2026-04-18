@@ -74,9 +74,13 @@ services:
     ports:
       - "6088:6080"
     networks:
-      idmz-net:
-        ipv4_address: 192.168.90.6
+      e-enterprise-net:
+        ipv4_address: 192.168.100.100
       a-grfics-admin:
+    volumes:
+      - ./attacker/start.sh:/usr/local/bin/start.sh:ro
+      - ./attacker/attack_automation.sh:/home/kali/Desktop/attack_automation.sh:ro
+      - ./attacker/attack_suite.py:/home/kali/Desktop/attack_suite.py:ro
     sysctls:
       net.ipv4.conf.default.arp_announce: 2
       net.ipv4.conf.all.arp_announce: 2
@@ -129,8 +133,8 @@ services:
     ports:
       - "8888:8888"
     networks:
-      idmz-net:
-        ipv4_address: 192.168.90.250
+      e-enterprise-net:
+        ipv4_address: 192.168.100.101
     volumes:
       - /var/log/wazuh
 

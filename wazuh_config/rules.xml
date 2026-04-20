@@ -54,7 +54,7 @@
   <rule id="100026" level="10">
     <if_sid>86601</if_sid>
     <field name="alert.signature_id">^1000020$</field>
-    <description>Suricata: ALERT - Reactor Pressure > 80%</description>
+    <description>Suricata: ALERT - Reactor Pressure > 90%</description>
     <group>modbus_anomaly,industrial_security,reactor_high,</group>
   </rule>
 
@@ -62,7 +62,7 @@
   <rule id="100027" level="14">
     <if_sid>86601</if_sid>
     <field name="alert.signature_id">^1000021$</field>
-    <description>Suricata: CRITICAL - Reactor Pressure > 95% (EXPLOSION RISK)</description>
+    <description>Suricata: CRITICAL - Reactor Pressure > 97% (EXPLOSION RISK)</description>
     <group>modbus_anomaly,industrial_security,reactor_critical,</group>
   </rule>
 
@@ -215,6 +215,30 @@
     <group>authentication_failed,credential_stuffing,pci_dss_11.4,gdpr_IV_35.7.d,</group>
   </rule>
 
+  <!-- MFA REQUIRED (Challenge issued) -->
+  <rule id="100530" level="3">
+    <if_sid>100500</if_sid>
+    <field name="message">MFA_REQUIRED</field>
+    <description>Keycloak: MFA Challenge Issued to $(user)</description>
+    <group>authentication_mfa,pci_dss_10.2.1,</group>
+  </rule>
+
+  <!-- MFA SUCCESS (2nd factor verified) -->
+  <rule id="100531" level="3">
+    <if_sid>100500</if_sid>
+    <field name="message">MFA_CODE_VERIFIED|OTP_VALIDATED</field>
+    <description>Keycloak: MFA Validation Successful for $(user)</description>
+    <group>authentication_mfa,authentication_success,pci_dss_10.2.1,</group>
+  </rule>
+
+  <!-- MFA FAILURE (Invalid token) -->
+  <rule id="100532" level="7">
+    <if_sid>100502</if_sid>
+    <field name="message">MFA_ERROR|INVALID_OTP</field>
+    <description>Keycloak: MFA Validation Failed for $(user) - Potential Account Takeover Attempt</description>
+    <group>authentication_failed,mfa_failure,pci_dss_10.2.4,</group>
+  </rule>
+
 </group>
 
 <!-- ===================== GUACAMOLE (Remote Access to EWS only) ===================== -->
@@ -322,5 +346,57 @@
     <group>credential_compromise,authentication_failed,industrial_security,</group>
   </rule>
 
+  <!-- ========== INSIDER THREAT: PLC Program Sabotage Detection ========== -->
 
+  <!-- INSIDER THREAT: PLC program file modified on EWS (FIM/Syscheck) -->
+  <rule id="100210" level="12">
+    <if_sid>550,551,553,554</if_sid>
+    <match>chemical.st</match>
+    <description>INSIDER THREAT: PLC program file (chemical.st) modified on EWS — potential sabotage</description>
+    <group>insider_threat,fim,plc_compromise,industrial_security,pci_dss_11.5,nist_800_53_SI.7,</group>
+  </rule>
+
+  <!-- INSIDER THREAT: EWS file change followed by PLC Console access (program upload attempt) -->
+  <rule id="100211" level="14" frequency="2" timeframe="600">
+    <if_matched_sid>100060</if_matched_sid>
+    <if_matched_group>insider_threat</if_matched_group>
+    <description>INSIDER THREAT: PLC program modified on EWS + PLC Console login within 10min — possible malicious upload</description>
+    <group>insider_threat,lateral_movement,plc_compromise,industrial_security,pci_dss_11.5,</group>
+  </rule>
+
+  <!-- INSIDER THREAT: Full kill chain — file modification + PLC access + reactor critical -->
+  <rule id="100212" level="15" frequency="2" timeframe="1800">
+    <if_matched_sid>100027</if_matched_sid>
+    <if_matched_group>insider_threat</if_matched_group>
+    <description>CRITICAL: Full Insider Threat Kill Chain — PLC program tampering led to reactor critical state</description>
+    <group>insider_threat,reactor_critical,plc_compromise,industrial_security,</group>
+  </rule>
+
+
+</group>
+
+<!-- ===================== FIREWALL DROPS (Visibility) ===================== -->
+
+<!-- ===================== FIREWALL DROPS (Visibility) ===================== -->
+<group name="firewall_drops,ot_recon_auditing,">
+  <rule id="100040" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="oob.prefix">^FW DROP: </field>
+    <description>Firewall: Packet dropped by router</description>
+    <group>firewall_drop,ot_recon_auditing,</group>
+  </rule>
+
+  <rule id="100041" level="7">
+    <if_sid>100040</if_sid>
+    <field name="dest_port">^502$</field>
+    <description>Firewall: Unauthorized Modbus access attempt blocked (port 502)</description>
+    <group>modbus_recon,firewall_drop,industrial_security,ot_recon_auditing,</group>
+  </rule>
+
+  <rule id="100042" level="7">
+    <if_sid>100040</if_sid>
+    <field name="dest_port">^22$|^80$|^443$|^3389$|^8080$</field>
+    <description>Firewall: Unauthorized access attempt to critical port $(dest_port) blocked</description>
+    <group>network_recon,firewall_drop,industrial_security,ot_recon_auditing,</group>
+  </rule>
 </group>

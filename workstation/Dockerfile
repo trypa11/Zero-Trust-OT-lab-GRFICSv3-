@@ -95,6 +95,13 @@ RUN chown -R engineer:engineer /home/engineer
 
 COPY index.html /opt/noVNC/index.html
 
+# Playwright automation
+RUN pip3 install playwright pytest-playwright && \
+    playwright install chromium --with-deps
+
+COPY playwright_attack.py /home/engineer/playwright_attack.py
+RUN chown engineer:engineer /home/engineer/playwright_attack.py
+
 # Install Wazuh Agent
 RUN apt-get update && apt-get install -y curl gnupg2 apt-transport-https && \
     curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && \

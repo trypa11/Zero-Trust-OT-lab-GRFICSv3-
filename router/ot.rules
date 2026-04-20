@@ -2,8 +2,11 @@
 
 
 # Dissertation Scenarios: Reactor Pressure Thresholds
-alert tcp 192.168.95.2 502 -> any any (msg:"OT: HIGH ALERT - Reactor Pressure > 80% (52428)"; modbus: address 108, access read; modbus: value >52428; classtype: industrial-protocol-anomaly; sid:1000020; rev:3;)
-alert tcp 192.168.95.2 502 -> any any (msg:"OT: SOC CRITICAL - Reactor Pressure > 95% (62258)"; modbus: address 108, access read; modbus: value >62258; classtype: fatal-error; sid:1000021; rev:3;)
+# Note: Suricata 6.x does not support 'modbus: value'. We use byte_test on the static HMI polling offset.
+# HMI query response content: 00 00 00 1d 01 04 1a. Pressure (%IW108) is at relative offset 16.
+alert tcp 192.168.95.2 502 -> any any (msg:"OT: HIGH ALERT - Reactor Pressure > 90% (58981)"; flow:established,from_server; content:"|00 00 00 1d 01 04 1a|"; byte_test:2,>,58981,16,relative; classtype:industrial-protocol-anomaly; sid:1000020; rev:6;)
+alert tcp 192.168.95.2 502 -> any any (msg:"OT: SOC CRITICAL - Reactor Pressure > 97% (63568)"; flow:established,from_server; content:"|00 00 00 1d 01 04 1a|"; byte_test:2,>,63568,16,relative; classtype:fatal-error; sid:1000021; rev:6;)
+
 
 # Defense-in-Depth: Unauthorized Modbus Writing
 alert tcp !192.168.96.10 any -> 192.168.95.2 502 (msg:"OT: SECURITY VIOLATION - Unauthorized Modbus Write Attempt"; modbus: access write; classtype: attempted-admin; sid:1000030; rev:1;)

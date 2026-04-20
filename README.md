@@ -1,312 +1,264 @@
-# GRFICSv3 —  Open Source OT Security Lab
+# Zero-Trust OT Security Lab
 
-> **GRFICSv3** is a fully containerized OT / ICS cyber-physical security lab that simulates a industrial chemical plant.
-> It brings together realistic process dynamics, industrial protocols, engineering tools, and attacker infrastructure all inside Docker.
->
-> Use it to explore **ICS / OT security**, practice **incident response**, or develop and test **defensive and offensive tools** in a safe, hands-on environment.
+A containerised laboratory for validating **Zero-Trust Architecture (ZTA)** in Operational Technology networks. The environment reproduces a chemical reactor process — PLC, HMI, Engineering Workstation — segmented across five Purdue-model zones and protected by identity-aware proxying, deep packet inspection, and centralised SIEM correlation.
 
-<p align="center">
-  <img src="/images/dashboard.png" alt="OT security lab dashboard" width="700">
-</p>
-
+Built as the empirical validation platform for academic research on *Zero-Trust Architectures in Critical Infrastructure*.
 
 ---
 
-## 🎯 Who is GRFICS for?
+## Table of Contents
 
-GRFICSv3 is designed for anyone learning or teaching **OT and ICS security**, including:
-
-- OT / ICS security practitioners and engineers
-- Blue teams and incident responders training on industrial environments
-- Red teams exploring ICS-specific attack paths
-- Educators building hands-on industrial cybersecurity labs
-- Researchers developing or testing OT security tools
-
-If you’ve ever wanted a realistic **OT security lab** without racks of hardware,
-this is for you.
-
-<p align="center">
-  <img src="/images/diagram.png" alt="Network diagram of OT security lab" width="700">
-</p>
+- [Architecture Overview](#architecture-overview)
+- [Network Segmentation](#network-segmentation)
+- [Security Components](#security-components)
+- [Firewall Policy Matrix](#firewall-policy-matrix)
+- [IDS Rules & Anomaly Detection](#ids-rules--anomaly-detection)
+- [Attack Scenarios](#attack-scenarios)
+- [Dissertation Metrics Engine](#dissertation-metrics-engine)
+- [Getting Started](#getting-started)
+- [Project Structure](#project-structure)
+- [Author](#author)
 
 ---
 
-## 🚀 Key Features
+## Architecture Overview
 
-* **End-to-end OT / ICS security lab** — PLCs, HMIs, engineering workstations, routers, and attacker tools
-* **3D process visualization** — watch tank levels and valves respond in real time
-* **Virtual Walkthroughs** — explore the warehouse in first person, observing physical layouts and security lapses 
-* **Built-in attack & defense tools** — Kali Linux, MITRE Caldera, and a custom firewall and Suricata IDS interface
-* **Modular, containerized design** — launch everything with a single `docker compose up`
-* **Realistic networking** — segmented process and enterprise zones with controllable traffic flow
+The lab models a five-zone OT network based on the Purdue Enterprise Reference Architecture (PERA). Unlike traditional perimeter-based designs that implicitly trust internal traffic, this environment enforces **continuous identity verification** at every boundary crossing. No service communicates directly with another unless explicitly authorised through a combination of identity, group membership, source IP, and protocol constraints.
 
----
+All services run as Docker containers interconnected via isolated **MacVLAN** networks (one per Purdue zone). A centralised router enforces iptables-based micro-segmentation with a **default-deny** forwarding policy, while an identity-aware reverse proxy (Pomerium) gates all human access through Keycloak-authenticated sessions with MFA.
 
-## Physical Vulnerabilities & Cyber Hygiene
+### Container Inventory
 
-One of the most powerful aspects of GRFICSv3 as an **OT security lab** is the ability to
-virtually walk the entire plant and warehouse.
-
-This allows learners to understand what a real industrial environment looks like and
-identify common **physical security and cyber hygiene failures**, such as:
-
-- Passwords written on sticky notes
-- Propped-open security doors
-- Unlocked cabinets and control panels
-- Poor separation between IT and OT spaces
-
-As vulnerabilities are discovered, the **Vulnerabilities Found** tracker in the top-left
-corner keeps score — making this ideal for self-paced learning and classroom exercises.
-
-<p align="center">
-  <img src="/images/vulns.png" alt="Track physical vulnerabilities and cyber hygiene" width="700">
-</p>
+| Container | Role | Zone | IP Address |
+| :--- | :--- | :--- | :--- |
+| `simulation` | Physical process simulator (reactor) | Control (L1) | `192.168.95.10` |
+| `plc` | OpenPLC — runs the control logic (`chemical.st`) | Control (L1) | `192.168.95.2` |
+| `HMI` | ScadaBR — supervisory dashboard | Supervisory (L2) | `192.168.96.10` |
+| `EWS` | Engineering Workstation — PLC programming | Operations (L3) | `192.168.97.5` |
+| `pomerium` | Identity-Aware Proxy (IAP) | IDMZ (L3.5) | `192.168.90.21` |
+| `guacamole` | Remote desktop gateway | IDMZ (L3.5) | `192.168.90.22` |
+| `guacd` | Guacamole connection daemon | IDMZ (L3.5) | `192.168.90.23` |
+| `guacamole_db` | PostgreSQL for Guacamole | IDMZ (L3.5) | `192.168.90.24` |
+| `keycloak` | Identity Provider (IdP) with MFA | Enterprise (L4) | `192.168.100.20` |
+| `wazuh.manager` | SIEM manager — log collection & correlation | Enterprise (L4) | `192.168.100.51` |
+| `wazuh.indexer` | OpenSearch indexer | Enterprise (L4) | `192.168.100.52` |
+| `wazuh.dashboard` | SIEM dashboard | Enterprise (L4) | `192.168.100.50` |
+| `router` | Central firewall, IDS (Suricata), routing | All zones | Multi-homed |
+| `kali` | Attacker machine for red-team scenarios | Enterprise (L4) | `192.168.100.100` |
 
 ---
 
-# 🤌 Installation
+## Network Segmentation
 
-## 1. Prerequisites
+Each zone maps to a dedicated MacVLAN network backed by VLAN-tagged host interfaces:
 
-* **Recommended OS:** Linux (native, VM, or WSL2)
-  GRFICS uses Docker and Docker Compose. Linux provides the lightest and most reliable experience, but following Docker's instructions for Windows should work fine too.
-* **Required packages:**
-  * For prebuilt images - Docker and Docker Compose
-  * For building from source - Docker, Docker Compose, Git, and Git LFS
+| Purdue Level | Zone Name | Subnet | VLAN | Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| Level 0/1 | Control | `192.168.95.0/24` | 95 | PLC and physical process |
+| Level 2 | Supervisory | `192.168.96.0/24` | 96 | HMI — process monitoring |
+| Level 3 | Operations | `192.168.97.0/24` | 97 | Engineering workstation |
+| Level 3.5 | IDMZ | `192.168.90.0/24` | 90 | Proxies and remote access |
+| Level 4 | Enterprise | `192.168.100.0/24` | 100 | Identity, SIEM, attacker |
 
-You can find an example walkthrough installation video here:
-https://youtu.be/X7YYCLJxMmo?si=qHRXlzfovdr3HsSZ
+An additional **bridge** network (`a-grfics-admin`) carries internal DNS resolution between containers that need to reach `keycloak.localhost.pomerium.io` without traversing the firewall.
 
-Otherwise, you can follow the instructions below.
+---
 
-Example install on Debian/Ubuntu:
+## Security Components
 
+### Pomerium — Identity-Aware Proxy
+Every web interface (HMI, PLC console, Guacamole, Simulation dashboard, Router admin) is published exclusively through Pomerium. Access requires:
+- Authentication via Keycloak OpenID Connect.
+- Membership in the appropriate group (`ot-engineer`, `plc-developer`, or `admin`).
+- For PLC management: **source IP restriction** to the EWS (`192.168.97.5/32`).
+
+### Keycloak — Identity Provider
+Centralised SSO with **Multi-Factor Authentication** (TOTP) enforced for the `engineer` user. User groups (`ot-engineer`, `plc-developer`, `admin`) map directly to Pomerium access policies.
+
+### Suricata — Intrusion Detection System
+Runs inline on the router, inspecting all inter-zone traffic with custom OT-specific rules (see [IDS Rules](#ids-rules--anomaly-detection)).
+
+### Wazuh — SIEM / XDR Platform
+Three-container deployment (Manager, Indexer, Dashboard) that ingests:
+- **Suricata** alerts (via Filebeat).
+- **Keycloak** authentication events (login success/failure).
+- **Netfilter** firewall drop logs (`NFLOG`).
+- **Wazuh agents** on the EWS, Router, and HMI (File Integrity Monitoring, syscheck).
+- **Guacamole** session audit logs (via syslog).
+
+Custom correlation rules detect multi-step kill chains (e.g., file tampering followed by PLC login within 10 minutes triggers an Insider Threat alert).
+
+### Guacamole — Remote Access Gateway
+Provides browser-based VNC/RDP/SSH access to the EWS through the IDMZ. All sessions are recorded and stored for forensic audit.
+
+---
+
+## Firewall Policy Matrix
+
+The router enforces a **default-deny** forwarding policy. All traffic not matching an explicit rule is logged via `NFLOG` and dropped. The permitted flows are:
+
+| # | Source | Destination | Proto | Port | Purpose |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | Supervisory zone (`192.168.96.0/24`) | Wazuh Manager | TCP | 1514 | Agent registration & log shipping |
+| 2 | Operations zone (`192.168.97.0/24`) | Wazuh Manager | TCP | 1514 | Agent registration & log shipping |
+| 3 | IDMZ zone (`192.168.90.0/24`) | Wazuh Manager | TCP | 1514 | Agent registration & log shipping |
+| 4 | Supervisory zone (`192.168.96.0/24`) | Wazuh Manager | TCP | 1515 | Agent key exchange |
+| 5 | Operations zone (`192.168.97.0/24`) | Wazuh Manager | TCP | 1515 | Agent key exchange |
+| 6 | IDMZ zone (`192.168.90.0/24`) | Wazuh Manager | TCP | 1515 | Agent key exchange |
+| 7 | HMI (`192.168.96.10`) | PLC (`192.168.95.2`) | TCP | 502 | Modbus/TCP — process control |
+| 8 | Pomerium (`192.168.90.21`) | HMI (`192.168.96.10`) | TCP | 8080 | Proxied HMI web access |
+| 9 | Pomerium (`192.168.90.21`) | PLC (`192.168.95.2`) | TCP | 8080 | Proxied PLC management console |
+| 10 | Pomerium (`192.168.90.21`) | Keycloak (`192.168.100.20`) | TCP | 8080 | IdP token exchange |
+| 11 | Pomerium (`192.168.90.21`) | Simulation (`192.168.95.10`) | TCP | 80 | Proxied simulation dashboard |
+| 12 | Pomerium (`192.168.90.21`) | Guacamole (`192.168.90.22`) | TCP | 8080 | Proxied remote access gateway |
+| 13 | Guacamole (`192.168.90.22`) | Guacd (`192.168.90.23`) | TCP | 4822 | Guacamole daemon protocol |
+| 14 | Guacamole (`192.168.90.22`) | Guac DB (`192.168.90.24`) | TCP | 5432 | PostgreSQL connection |
+| 15 | EWS (`192.168.97.5`) | Pomerium (`192.168.90.21`) | TCP | 443 | Engineer → proxy access |
+| 16 | EWS (`192.168.97.5`) | Keycloak (`192.168.100.20`) | TCP | 8080 | Engineer authentication |
+| 17 | Guacd (`192.168.90.23`) | EWS (`192.168.97.5`) | TCP | 5900 | VNC remote desktop |
+| 18 | Guacd (`192.168.90.23`) | EWS (`192.168.97.5`) | TCP | 22 | SSH access |
+| 19 | Guacd (`192.168.90.23`) | EWS (`192.168.97.5`) | TCP | 3389 | RDP access |
+| 20 | Guacamole (`192.168.90.22`) | Wazuh Manager | UDP | 514 | Syslog audit export |
+| **∗** | **Everything else** | **Everything else** | **—** | **—** | **LOGGED & DROPPED** |
+
+---
+
+## IDS Rules & Anomaly Detection
+
+Custom Suricata signatures in `router/ot.rules` provide OT-specific threat detection:
+
+| SID | Severity | Description | Trigger |
+| :--- | :--- | :--- | :--- |
+| `1000020` | High | Reactor Pressure > 90% | Modbus response byte value > 58981 |
+| `1000021` | Critical | Reactor Pressure > 97% (explosion risk) | Modbus response byte value > 63568 |
+| `1000030` | High | Unauthorised Modbus Write attempt | Write from any source ≠ HMI |
+| `1000031` | Medium | Unauthorised Modbus Read (recon) | Read from Enterprise zone |
+| `1000041` | Medium | Network scan / Nmap probes | SYN packets from Enterprise to OT zones |
+| `1000100` | — | PLC login attempt (internal) | HTTP POST to `/login` on PLC |
+| `1000101` | High | PLC login successful | HTTP redirect to `/dashboard` from PLC |
+
+> **Tuning note:** The pressure threshold was raised from 80% to 90% to prevent false positives during normal operation (baseline ~84%). This ensures that alerts fire only during genuine process manipulation.
+
+---
+
+## Attack Scenarios
+
+The lab includes an automated attack suite (`attacker/attack_automation.sh`) that validates the detection capabilities of the security stack against three threat profiles:
+
+### Scenario A — OT Network Reconnaissance
+An attacker on the Enterprise network performs Nmap scanning and Modbus register reads against OT assets. The firewall blocks cross-zone access and logs every attempt; Suricata flags protocol-layer discovery.
+
+### Scenario B — Insider Threat: Reactor Sabotage
+A compromised engineer uses legitimate credentials to:
+1. Authenticate through Pomerium and open a Guacamole VNC session to the EWS.
+2. Modify the PLC program (`chemical.st`) on the EWS filesystem.
+3. Upload the tampered program to the PLC via its web management console.
+
+The SIEM correlates **File Integrity Monitoring** changes with **PLC console access** to produce an Insider Threat alert before reactor pressure reaches critical levels.
+
+### Scenario C — Identity Brute Force & MFA Validation
+An attacker attempts credential stuffing (8 wrong passwords), then uses the **correct password without OTP**, then guesses wrong OTP codes. All attempts fail — MFA enforcement blocks token issuance even with valid credentials.
+
+---
+
+## Dissertation Metrics Engine
+
+The Python-based evaluation engine (`calculate_dissertation_metrics.py`) quantifies the security posture with:
+
+| Metric | Formula | Description |
+| :--- | :--- | :--- |
+| **Visibility Coverage** | Detected Steps / Total Steps × 100 | Percentage of kill-chain steps that generated at least one SIEM alert |
+| **Mean Time to Detect** | Σ(T_detect − T_attack) / N | Average latency between attack execution and SOC alerting |
+| **True Positives** | Alerts within [−60s, +300s] of attack steps | Security events correlated to known attack activity |
+| **False Positives** | Alerts outside valid attack windows | Noise or alarm fatigue from non-attack periods |
+| **Detection Precision** | TP / (TP + FP) | Specificity of correlation rules |
+
+A configurable **Test Horizon** boundary discards all historical alerts before the test window to prevent residual noise from skewing live metrics.
+
+### Running the Evaluation
 ```bash
-# Remove packages that conflict with Docker
-sudo apt remove $(dpkg --get-selections docker.io docker-compose docker-compose-v2 docker-doc podman-docker containerd runc | cut -f1)
+# 1. Execute all attack scenarios
+./attacker/attack_automation.sh
 
-# Add Docker's official GPG key:
-sudo apt update
-sudo apt install ca-certificates curl
-sudo install -m 0755 -d /etc/apt/keyrings
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-sudo chmod a+r /etc/apt/keyrings/docker.asc
-
-# Add the repository to Apt sources:
-sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
-Types: deb
-URIs: https://download.docker.com/linux/ubuntu
-Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
-Components: stable
-Signed-By: /etc/apt/keyrings/docker.asc
-EOF
-
-sudo apt update
-
-# Install latest version of Docker
-sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-# Install git
-sudo apt install -y git git-lfs
-
-# (Optional) allow non-root docker use
-sudo usermod -aG docker $USER
-```
-
-Log out and back in if you added yourself to the Docker group.
-
----
-
-## 2. Install GRFICS
-
-You can either **pull the prebuilt images from Docker Hub** (quick and easy)  
-or **build everything locally** if you want to modify or customize.
-
----
-
-### 🐋 Option A: Pull prebuilt images (recommended)
-
-The fastest way to get started — no building required!
-
-```bash
-# Download the latest docker-compose.yml
-curl -O https://raw.githubusercontent.com/Fortiphyd/GRFICSv3/main/docker-compose.yml
-
-# Start GRFICS using prebuilt images from Docker Hub
-docker compose pull
-docker compose up -d
-```
-
-### 🏗️ Option B: Clone and build
-
-```bash
-git clone https://github.com/Fortiphyd/GRFICSv3.git
-cd GRFICSv3
-docker compose build
-```
-
-Start the environment:
-
-```bash
-docker compose up -d
-```
-
-Watch logs (optional):
-
-```bash
-docker compose logs -f
-```
-
-Then open your browser and visit **[http://localhost](http://localhost)** —
-you should see the 3D chemical plant simulation come to life.
-
----
-
-# 🗞 Using GRFICS
-
-## Starting & Stopping
-
-* To stop all running containers:
-
-  ```bash
-  docker compose down
-  ```
-* To stop but keep containers/images:
-
-  ```bash
-  docker compose stop
-  ```
-* To restart later:
-
-  ```bash
-  docker compose start
-  ```
-
----
-
-## Core Containers & Access Points
-
-| Container                   | How to Access                                                           | Credentials           | Description                               |
-| --------------------------- | ----------------------------------------------------------------------- | --------------------- | ----------------------------------------- |
-| **Simulation**              | [http://localhost](http://localhost)                                    | —                     | 3D chemical plant visualization           |
-| **Engineering Workstation** | [http://localhost:6080](http://localhost:6080)        | —                     | HMI and PLC configuration                 |
-| **Kali**                    | [http://localhost:6088](http://localhost:6088)        | `kali : kali`         | Attacker VM for exploitation and scanning |
-| **Caldera**                 | [http://localhost:8888](http://localhost:8888)                          | `red : fortiphyd-red` | MITRE Caldera with OT plugin              |
-| **PLC (OpenPLC)**           | [http://localhost:8080](http://localhost:8080) or `192.168.95.2:8080`   | `openplc : openplc`   | Programmable logic controller             |
-| **HMI**                     | [http://localhost:6081](http://localhost:6081) or `192.168.90.107:8080` | `admin : admin`       | Operator interface                        |
-| **Router / Firewall UI**    | `192.168.90.200:5000` or `192.168.95.200:5000`                          | `admin : password`    | View or modify firewall rules             |
-
-
----
-
-## Screenshots
-
-Simulation
-
-![Simulation screenshot](/images/sim.png)
-
-Kali
-
-![Kali screenshot](/images/kali.png)
-
-Caldera
-
-![Caldera screenshot](/images/caldera.png)
-
-Engineering Workstation
-
-![EW screenshot](/images/ew.png)
-
-Router / Firewall
-
-![Router screenshot](/images/firewall.png)
-
-PLC
-
-![PLC screenshot](/images/plc.png)
-
-HMI
-
-![HMI screenshot](/images/hmi.png)
-
----
-
-# 🛠 Troubleshooting
-
-### Network interface errors
-
-If build or startup fails with a message about creating a network interface,
-edit `docker-compose.yml` (around lines 140 and 149) to match your actual network interface name (e.g., `eth0`, `enp0s3`, or your WSL adapter).
-
-### Permission errors
-
-If you see `permission denied` errors running Docker commands, prefix with `sudo` or ensure your user is added to the `docker` group.
-
-### Container won’t start
-
-Run:
-
-```bash
-docker compose logs <service-name>
-```
-
-to view detailed logs, or `docker compose ps` to check the status of all containers.
-
-### Resetting everything
-
-To rebuild from scratch:
-
-```bash
-docker compose down --volumes
-docker compose up -d --build
+# 2. Generate the metrics report
+python3 calculate_dissertation_metrics.py --horizon 10
 ```
 
 ---
 
-# ⚙️ Development Tips
+## Getting Started
 
-* To rebuild a single service:
+### Prerequisites
+- Docker Engine & Docker Compose v2
+- Python 3.10+ (for metrics engine)
+- VLAN-capable host network interface
+- At least 16 GB RAM recommended
 
-  ```bash
-  docker compose build <service-name>
-  docker compose up -d <service-name>
-  ```
-* To monitor logs interactively:
+### Quick Start
+```bash
+# Clone the repository
+git clone https://github.com/<your-org>/Zero-Trust-OT-lab.git
+cd Zero-Trust-OT-lab
 
-  ```bash
-  docker compose logs -f
-  ```
-* To check which containers are running:
+# Run the automated setup
+chmod +x setup_lab.sh
+./setup_lab.sh
+```
 
-  ```bash
-  docker compose ps
-  ```
+The setup script will:
+1. Detect your host network interface for MacVLAN mapping.
+2. Export and back up the current Keycloak realm to `./keycloak_backups/`.
+3. Generate SSL certificates for the Wazuh stack (first run only).
+4. Build all custom container images from source.
+5. Start the full environment with `docker compose up -d`.
 
----
+### Accessing the Lab
 
-# 🌐 About GRFICS
+| Interface | URL | Required Group |
+| :--- | :--- | :--- |
+| HMI Dashboard | `https://hmi.localhost.pomerium.io` | `ot-engineer` |
+| PLC Management | `https://plc.localhost.pomerium.io` | `ot-engineer` + source IP |
+| Remote Desktop | `https://guacamole.localhost.pomerium.io` | `ot-engineer` |
+| Simulation View | `https://simulation.localhost.pomerium.io` | `ot-engineer` |
+| Router / Firewall | `https://router.localhost.pomerium.io` | `admin` |
+| SIEM Dashboard | `https://localhost:5601` | Direct (admin/admin) |
 
-GRFICS was created by **Fortiphyd Logic** to make industrial cybersecurity **accessible, hands-on, and realistic**.
-Version 3 takes everything from earlier GRFICS releases and brings it into a modern, containerized architecture
-ready for use in classrooms, cyber ranges, and research environments.
-
-Learn more at [https://fortiphyd.com](https://fortiphyd.com)
-
----
-
-# 💡 More from Fortiphyd Logic
-
-If you enjoy GRFICSv3, you may be interested in our commercial offerings that expand on GRFICS with:
-
-- A growing catalog of **sector-specific simulations** — power grid, water, manufacturing, and maritime
-- **Hosted cyber ranges** for teams and classrooms, no installation required
-
-Visit [https://fortiphyd.com](https://fortiphyd.com) to learn more, or [follow us on LinkedIn](https://www.linkedin.com/company/fortiphyd-logic) for updates, new labs, and release announcements.
-
-💛 If you use GRFICSv3 in your research, teaching, or demos and want to help sustain its development, consider **sponsoring the project**. Even small contributions help us keep improving the open version!
+> **Note:** Ensure your `/etc/hosts` resolves `*.localhost.pomerium.io` to `127.0.0.1`, or configure a local DNS wildcard.
 
 ---
 
-> **Build. Break. Defend. Learn.**  
-> GRFICSv3 brings industrial cybersecurity to life, no hardware required.
+## Project Structure
 
+```
+Zero-Trust-OT-lab/
+├── attacker/                  # Kali container: attack scripts & automation
+│   ├── attack_automation.sh   # Orchestrates Scenarios A, B, C
+│   ├── attack_suite.py        # Modbus scanning tool
+│   └── scenario_b_host.sh     # Insider threat kill-chain
+├── guacamole/                 # Guacamole config, extensions, DB init
+├── keycloak_backups/          # Timestamped realm exports
+├── plc/                       # OpenPLC build context
+├── pomerium/
+│   └── config.yaml            # Route definitions & access policies
+├── router/
+│   ├── setup-firewall.sh      # iptables rules (default-deny)
+│   └── ot.rules               # Custom Suricata IDS signatures
+├── scadalts/                  # ScadaBR (HMI) build context
+├── simulation/                # Reactor simulation build context
+├── wazuh_config/
+│   ├── rules.xml              # Custom SIEM correlation rules
+│   ├── decoders.xml           # Custom log decoders
+│   └── wazuh_indexer_ssl_certs/
+├── workstation/               # EWS build context
+├── calculate_dissertation_metrics.py
+├── docker-compose.yml
+├── setup_lab.sh               # One-touch deployment script
+└── .env                       # Secrets (not committed)
+```
+
+---
+
+## Author
+
+**Tryfon Iason Papatriantafyllou**
+Version: 1.0

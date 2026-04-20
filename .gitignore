@@ -1,22 +1,38 @@
 # Binaries and executables
 bin/
 
+# Guacamole session recordings (prevents large file commits)
 guacamole/recordings/*
 
-# Security: Ignore SSL certificates and keys
+# Security: Ignore generated SSL certificates and sensitive keys
 wazuh_config/wazuh_indexer_ssl_certs/
+wazuh_config/certs/
 **/*.pem
 **/*.key
 **/*.crt
 
-# Logs and databases
+# Keycloak Backups (excludes timestamped exports, keeps seed)
+keycloak_backups/
+
+# Logs, Databases and Temp result files
 *.log
 *.sqlite
 *.db
+*.bak
+latest_events.csv
+latest_alerts.json
+scenario_b_*.txt
+dissertation_metrics_report.txt
+
+# Python Environment
+__pycache__/
+.venv/
+*.pyc
 
 # Docker and local environment
 .DS_Store
+.idea/
+.vscode/
 
 # AI Assistant Metadata
 .gemini/
- 

@@ -124,19 +124,19 @@ services:
       e-enterprise-net:
         ipv4_address: 192.168.100.200
 
-  caldera:
-    image: fortiphyd/grfics-caldera
-    container_name: caldera
-    hostname: caldera
-    build: ./caldera
-    restart: unless-stopped
-    ports:
-      - "8888:8888"
-    networks:
-      e-enterprise-net:
-        ipv4_address: 192.168.100.101
-    volumes:
-      - /var/log/wazuh
+#  caldera:
+#    image: fortiphyd/grfics-caldera
+#    container_name: caldera
+#    hostname: caldera
+#    build: ./caldera
+#    restart: unless-stopped
+#    ports:
+#      - "8888:8888"
+#    networks:
+#      e-enterprise-net:
+#        ipv4_address: 192.168.100.101
+#    volumes:
+#      - /var/log/wazuh
 
   # --- Identity & Zero Trust ---
   keycloak:
@@ -171,7 +171,7 @@ services:
     network_mode: "service:keycloak"
     cap_add:
       - NET_ADMIN
-    command: sh -c "sleep 2 && ip route add 192.168.0.0/16 via 192.168.100.1 && tail -f /dev/null"
+    command: sh -c "while true; do if ip addr show dev eth0 >/dev/null 2>&1; then ip route replace 192.168.0.0/16 via 192.168.100.1 || exit 1; else exit 1; fi; sleep 5; done"
     restart: always
     depends_on:
       keycloak:
@@ -208,11 +208,14 @@ services:
         while true; do
           IFACE=$$(ip -4 addr show 2>/dev/null | grep '192.168.90' | awk '{print $$NF}');
           if [ -n \"$$IFACE\" ]; then
-            ip route replace default via 192.168.90.1 dev $$IFACE;
+            ip route add 192.168.90.1 dev $$IFACE scope link 2>/dev/null || true;
+            ip route replace default via 192.168.90.1 dev $$IFACE || exit 1;
             for SUBNET in 192.168.95.0/24 192.168.96.0/24 192.168.100.0/24; do
-              ip route replace $$SUBNET via 192.168.90.1 dev $$IFACE;
+              ip route replace $$SUBNET via 192.168.90.1 dev $$IFACE || exit 1;
             done
             ip route del 192.168.90.0/24 dev $$IFACE 2>/dev/null || true;
+          else
+            exit 1;
           fi;
           sleep 5;
         done
@@ -258,7 +261,7 @@ services:
     network_mode: "service:guacamole_db"
     cap_add:
       - NET_ADMIN
-    command: sh -c "sleep 2 && ip route replace default via 192.168.90.1 dev eth0 && ip route del 192.168.90.0/24 dev eth0 2>/dev/null || true && tail -f /dev/null"
+    command: sh -c "while true; do if ip addr show dev eth0 >/dev/null 2>&1; then ip route add 192.168.90.1 dev eth0 scope link 2>/dev/null || true; ip route replace default via 192.168.90.1 dev eth0 || exit 1; ip route del 192.168.90.0/24 dev eth0 2>/dev/null || true; else exit 1; fi; sleep 5; done"
     restart: always
     depends_on:
       guacamole_db:
@@ -280,7 +283,7 @@ services:
     network_mode: "service:guacd"
     cap_add:
       - NET_ADMIN
-    command: sh -c "sleep 2 && ip route replace default via 192.168.90.1 dev eth0 && ip route del 192.168.90.0/24 dev eth0 2>/dev/null || true && tail -f /dev/null"
+    command: sh -c "while true; do if ip addr show dev eth0 >/dev/null 2>&1; then ip route add 192.168.90.1 dev eth0 scope link 2>/dev/null || true; ip route replace default via 192.168.90.1 dev eth0 || exit 1; ip route del 192.168.90.0/24 dev eth0 2>/dev/null || true; else exit 1; fi; sleep 5; done"
     restart: always
     depends_on:
       guacd:
@@ -316,7 +319,7 @@ services:
     network_mode: "service:guacamole"
     cap_add:
       - NET_ADMIN
-    command: sh -c "sleep 2 && ip route replace default via 192.168.90.1 dev eth0 && ip route del 192.168.90.0/24 dev eth0 2>/dev/null || true && tail -f /dev/null"
+    command: sh -c "while true; do if ip addr show dev eth0 >/dev/null 2>&1; then ip route add 192.168.90.1 dev eth0 scope link 2>/dev/null || true; ip route replace default via 192.168.90.1 dev eth0 || exit 1; ip route del 192.168.90.0/24 dev eth0 2>/dev/null || true; else exit 1; fi; sleep 5; done"
     restart: always
     depends_on:
       guacamole:

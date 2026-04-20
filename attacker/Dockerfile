@@ -37,7 +37,12 @@ RUN mkdir -p /var/run/xvfb /var/run/x11vnc /opt/novnc/utils && chown -R ${USERNA
 # Install tools
 RUN apt-get update && \
     apt-get -y install --no-install-recommends \
-    kali-tools-top10 python3-pymodbus
+    kali-tools-top10 python3-pymodbus nodejs npm \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install Playwright and Chromium
+RUN pip3 install playwright pytest-playwright --break-system-packages
+RUN playwright install chromium --with-deps
 
 # Supervisor config (to run xvfb, x11vnc, websockify)
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf

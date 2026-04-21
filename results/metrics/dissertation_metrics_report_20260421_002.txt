@@ -1,0 +1,181 @@
+====================================================================================================
+                                    DISSERTATION METRICS REPORT                                     
+                  Zero-Trust Architecture for ICS/OT — Defence-in-Depth Validation                  
+====================================================================================================
+  Report generated : 2026-04-21 09:44:39
+  Attack log       : attack_results.txt
+  SIEM data source : latest_events.csv  (5000 alerts ingested)
+  Timezone offset  : Attack logs UTC+3 → SIEM UTC  (Δ = -3h)
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                        ATTACK STEPS INVENTORY                                      
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  #    Scenario       Type               MITRE Tactic               Description
+  ────────────────────────────────────────────────────────────────────────────────────────────────
+  1    SCENARIO A     Nmap               TA0043 / T0846             Auditing IDMZ Zone (Proxies & Gateways)....
+  2    SCENARIO A     Nmap               TA0043 / T0846             Auditing Level 3 Ops Connectivity (EWS)....
+  3    SCENARIO A     Nmap               TA0043 / T0846             Auditing Level 2 Supervisory Connectivit...
+  4    SCENARIO A     Nmap               TA0043 / T0846             Auditing Level 1/0 Control Connectivity ...
+  5    SCENARIO A     Modbus Recon       TA0102 / T0861             Launching Mdbget (Modbus Scan) to extrac...
+  6    SCENARIO A     Modbus Write       TA0040 / T0831             Attempting False Data Injection (Modbus ...
+  7    SCENARIO B     Identity Access    TA0001 / T0866             Navigating to Zero-Trust Gateway (Guacam...
+  8    SCENARIO B     VNC Session        TA0008 / T0886             Opening remote desktop session (VNC) to ...
+  9    SCENARIO B     FIM                TA0040 / T0831             Modifying PLC program on EWS (chemical.s...
+  10   SCENARIO B     PLC Login          TA0006 / T0859             Logging into PLC Console and uploading m...
+  11   SCENARIO B     Sabotage           TA0040 / T0831             Monitoring Reactor Pressure Increase (Ph...
+  12   SCENARIO C     Brute Force        TA0006 / T0110             Brute-forcing engineer credentials (wron...
+  13   SCENARIO C     Brute Force        TA0006 / T0110             Correct password WITHOUT OTP (MFA blocks...
+  14   SCENARIO C     Brute Force        TA0006 / T0110             Correct password + WRONG OTP code (attac...
+  15   SCENARIO B     FIM Restore        TA0005 / T1070             Restoring PLC values to safe operating s...
+
+====================================================================================================
+                                      DETAILED SCENARIO ANALYSIS                                    
+====================================================================================================
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ SCENARIO A: OT Network & Protocol Reconnaissance Audit                                       │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ External adversary (Kali) probes the segmented OT network to discover assets across all      │
+  │ Purdue levels. The Zero-Trust firewall should block every cross-zone probe and generate SIEM │
+  │ alerts.                                                                                      │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  #   Attack Step                     Status    MTTD      Matched SIEM Evidence                     
+  ──────────────────────────────────────────────────────────────────────────────────────────────────
+  ✓ 1 Auditing IDMZ Zone (Proxies & ..DETECTED  3.219s    Rule 100035: Suricata: SECURITY ALARM - ..
+  ✓ 2 Auditing Level 3 Ops Connectiv..DETECTED  1.764s    Rule 100035: Suricata: SECURITY ALARM - ..
+  ✓ 3 Auditing Level 2 Supervisory C..DETECTED  0.000s    Rule 100035: Suricata: SECURITY ALARM - ..
+  ✓ 4 Auditing Level 1/0 Control Con..DETECTED  0.000s    Rule 100035: Suricata: SECURITY ALARM - ..
+  ✓ 5 Launching Mdbget (Modbus Scan)..DETECTED  2.272s    Rule 100041: Firewall: Unauthorized Modb..
+  ✓ 6 Attempting False Data Injectio..DETECTED  0.000s    Rule 100041: Firewall: Unauthorized Modb..
+  ──────────────────────────────────────────────────────────────────────────────────────────────────
+  → Visibility Coverage : 100.0%  (6/6 steps detected)
+  → Mean MTTD           : 1.209s
+  → Median MTTD         : 0.882s
+
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ SCENARIO B: Insider Threat — PLC Program Sabotage via Remote Access                          │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ Compromised insider authenticates through the Pomerium/Keycloak gateway, establishes a VNC   │
+  │ session to the EWS via Guacamole, modifies the PLC program (chemical.st) with sabotage       │
+  │ values, and uploads it to the PLC. Detection relies on FIM, identity logs, and Suricata proxy│
+  │ monitoring.                                                                                  │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  #   Attack Step                     Status    MTTD      Matched SIEM Evidence                     
+  ──────────────────────────────────────────────────────────────────────────────────────────────────
+  ✓ 1 Navigating to Zero-Trust Gatew..DETECTED  171.483s  Rule 100502: Keycloak: User Login Failed..
+  ✓ 2 Opening remote desktop session..DETECTED  0.566s    Rule 100101: Guacamole: User  authentica..
+  ✓ 3 Modifying PLC program on EWS (..DETECTED  0.098s    Rule 100210: INSIDER THREAT: PLC program..
+  ✓ 4 Logging into PLC Console and u..DETECTED  1.353s    Rule 100060: PLC Management Console: Suc..
+  ✓ 5 Monitoring Reactor Pressure In..DETECTED  59.509s   Rule 100026: Suricata: ALERT - Reactor P..
+  ✓ 6 Restoring PLC values to safe o..DETECTED  0.074s    Rule 100210: INSIDER THREAT: PLC program..
+  ──────────────────────────────────────────────────────────────────────────────────────────────────
+  → Visibility Coverage : 100.0%  (6/6 steps detected)
+  → Mean MTTD           : 38.847s
+  → Median MTTD         : 0.960s
+
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ SCENARIO C: Identity Brute Force & MFA Enforcement Validation                                │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ External adversary attempts credential stuffing against Keycloak. Validates that MFA         │
+  │ enforcement blocks access even with a correct password, and that the SIEM flags all failed   │
+  │ authentication attempts.                                                                     │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  #   Attack Step                     Status    MTTD      Matched SIEM Evidence                     
+  ──────────────────────────────────────────────────────────────────────────────────────────────────
+  ✓ 1 Brute-forcing engineer credent..DETECTED  2.241s    Rule 100502: Keycloak: User Login Failed..
+  ✓ 2 Correct password WITHOUT OTP (..DETECTED  1.258s    Rule 100502: Keycloak: User Login Failed..
+  ✓ 3 Correct password + WRONG OTP c..DETECTED  1.157s    Rule 100502: Keycloak: User Login Failed..
+  ──────────────────────────────────────────────────────────────────────────────────────────────────
+  → Visibility Coverage : 100.0%  (3/3 steps detected)
+  → Mean MTTD           : 1.552s
+  → Median MTTD         : 1.258s
+
+====================================================================================================
+                                   MITRE ATT&CK ICS COVERAGE MATRIX                                 
+====================================================================================================
+  Attack Type        Tactic / Technique             Description                          Detected
+  ────────────────────────────────────────────────────────────────────────────────────────────
+  Nmap               TA0043 / T0846                 Reconnaissance / Gather Victim Net..   ✓
+  Modbus Recon       TA0102 / T0861                 Collection / Point & Tag Identific..   ✓
+  Modbus Write       TA0040 / T0831                 Impact / External Manipulation of ..   ✓
+  Identity Access    TA0001 / T0866                 Initial Access / Exploitation of R..   ✓
+  VNC Session        TA0008 / T0886                 Lateral Movement / Remote Services     ✓
+  FIM                TA0040 / T0831                 Impact / Manipulation of Control       ✓
+  PLC Login          TA0006 / T0859                 Credential Access / Valid Accounts     ✓
+  Sabotage           TA0040 / T0831                 Impact / Manipulation of Control       ✓
+  Brute Force        TA0006 / T0110                 Credential Access / Brute Force        ✓
+  FIM Restore        TA0005 / T1070                 Defense Evasion / Indicator Remova..   ✓
+
+====================================================================================================
+                                  FINAL DISSERTATION METRICS SUMMARY                                
+====================================================================================================
+
+  ┌──────────────────────────────────────────────────────────────┐
+  │  Overall ZT Visibility Coverage :   100.0%  (15/15 steps)      │
+  │  Mean Time to Detect  (MTTD)    :  16.333s                    │
+  │  Median Time to Detect (MTTD)   :   1.258s                    │
+  │  True Positives (TP)           :      22                       │
+  │  False Positives (FP)          :      15                       │
+  │  Detection Precision           :    59.5%                       │
+  │  Total SIEM Alerts Ingested      :    5000                       │
+  └──────────────────────────────────────────────────────────────┘
+
+====================================================================================================
+                              METRIC CALCULATION METHODOLOGY & FORMULAS                             
+====================================================================================================
+
+  1. Visibility Coverage (%)
+     Formula: (Total Steps Detected / Total Steps Attempted) * 100
+     Definition: Measures the security stack's ability to provide end-to-end auditability
+     across the entire kill-chain.
+
+  2. Mean/Median Time to Detect (MTTD)
+     Formula (Mean): Σ(Detection_Timestamp - Attack_Timestamp) / N_Detected
+     Definition: Quantifies the responsiveness of the SIEM pipeline. Median is used to
+     offset outliers caused by network batching or log ingestion delays (e.g., Suricata).
+
+  3. True Positives (TP)
+     Definition: Security alerts matching known attack signatures that occur within a
+     [-60s, +300s] time window of a logged attack step execution.
+
+  4. False Positives (FP)
+     Definition: Security alerts from tracked rules that occur outside the valid attack
+     windows. This measures the 'noise' or 'alarm fatigue' generated by the system.
+
+  5. Detection Precision
+     Formula: TP / (TP + FP)
+     Evaluation: 100% Precision indicate that the Zero-Trust correlation rules are
+     highly specific and only fire in response to verified malicious activity.
+
+  6. Scientific Window Correlation (Test Horizon)
+     Logic: All SIEM alerts occurring before the 'Test Start' (T_first_step - 60s) are
+     mathematically discarded to prevent historical noise from skewing live metrics.
+
+  7. Nmap Step Coverage — Shared Alert Behaviour
+     Note: Suricata fires rule 1000041 (Wazuh 100035) at most once per 60-second interval
+     per source IP, regardless of how many Nmap scan steps execute within that window.
+     As a result, the same Wazuh alert may match all four Scenario A Nmap steps. This is
+     intentional: the SIEM correctly identifies the sustained reconnaissance event as one
+     security incident. Each step is reported individually for narrative fidelity; the
+     shared match is a property of Suricata rate-limiting, not a metric inflation artefact.
+
+  8. Detection Sensitivity (Recall) — Methodology Note
+     Formula: Sensitivity = TP / (TP + FN)
+     Limitation: This engine does not track False Negatives (FN) because FN detection
+     requires a complete ground-truth manifest of every alert that should have fired.
+     Expected detection rules per scenario:
+       Scenario A — 100035, 100029, 100028, 100031, 100041
+       Scenario B — 100101, 100103, 100501, 100210, 100060, 100025, 100026, 100027
+       Scenario C — 100502, 100520, 100521, 100532
+     A future extension may compare this manifest against ingested alerts to produce
+     an explicit sensitivity score.
+
+====================================================================================================
+  --- END OF DISSERTATION METRICS REPORT ---
+====================================================================================================
+

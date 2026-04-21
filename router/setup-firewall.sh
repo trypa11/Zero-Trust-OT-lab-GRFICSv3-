@@ -83,7 +83,7 @@ cat <<EOF > "$RULES_PATH"
 :FORWARD DROP [0:0]
 :OUTPUT ACCEPT [0:0]
 :LOGDROP - [0:0]
--A LOGDROP -m limit --limit 10/second -j NFLOG --nflog-group 1 --nflog-prefix "FW DROP: " 
+-A LOGDROP -m limit --limit 6/minute --limit-burst 2 -j NFLOG --nflog-group 1 --nflog-prefix "FW DROP: " 
 -A LOGDROP -j DROP
 -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 -A FORWARD -i $IF_SUPERVISORY -o $IF_ENTERPRISE -p tcp -s 192.168.96.0/24 -d $WAZUH_MNGR --dport 1514 -j ACCEPT
@@ -101,6 +101,7 @@ cat <<EOF > "$RULES_PATH"
 -A FORWARD -i $IF_IDMZ -o $IF_IDMZ -p tcp -s $GUAC_WEB_IP -d $GUACD_IP --dport 4822 -j ACCEPT
 -A FORWARD -i $IF_IDMZ -o $IF_IDMZ -p tcp -s $GUAC_WEB_IP -d $GUAC_DB_IP --dport 5432 -j ACCEPT
 -A FORWARD -i $IF_MANOPS -o $IF_IDMZ -p tcp -s $EWS_IP -d $POMERIUM_IP --dport 443 -j ACCEPT
+-A FORWARD -i $IF_ENTERPRISE -o $IF_IDMZ -p tcp -s 192.168.100.0/24 -d $POMERIUM_IP --dport 443 -j ACCEPT
 -A FORWARD -i $IF_MANOPS -o $IF_ENTERPRISE -p tcp -s $EWS_IP -d $KEYCLOAK_IP --dport 8080 -j ACCEPT
 -A FORWARD -i $IF_IDMZ -o $IF_MANOPS -p tcp -s $GUACD_IP -d $EWS_IP --dport 5900 -j ACCEPT
 -A FORWARD -i $IF_IDMZ -o $IF_MANOPS -p tcp -s $GUACD_IP -d $EWS_IP --dport 22 -j ACCEPT
@@ -111,4 +112,10 @@ COMMIT
 EOF
 
 iptables-restore < "$RULES_PATH"
+
+# SNAT for EWS→Keycloak: Keycloak's default route is the Docker bridge, so replies
+# would bypass the router asymmetrically. MASQUERADE makes Keycloak see connections
+# from the router's enterprise-net IP, ensuring symmetric return through the router.
+iptables -t nat -A POSTROUTING -s "$EWS_IP" -d "$KEYCLOAK_IP" -o "$IF_ENTERPRISE" -j MASQUERADE
+
 echo "Zero Trust Firewall initialized with dynamic mappings."

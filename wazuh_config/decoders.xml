@@ -5,13 +5,13 @@
 <!-- Robust Login Failure Decoder -->
 <decoder name="guacamole-login-failure">
   <parent>guacamole</parent>
-  <regex>Authentication attempt from (\S+) for user "(\S+)" (\w+):</regex>
+  <regex>Authentication attempt from (\S+) for user "(\S+)" (\w+):|User "(\S+)" authentication failed</regex>
   <order>srcip, user, status</order>
 </decoder>
 
 <decoder name="guacamole-login-success">
   <parent>guacamole</parent>
-  <regex>User "(\S+)" successfully authenticated from (\S+)\.</regex>
+  <regex>User "(\S+)" \.* successfully authenticated from \.*(\d+.\d+.\d+.\d+)</regex>
   <order>user, srcip</order>
 </decoder>
 
@@ -23,6 +23,6 @@
 
 <decoder name="guacamole-connection">
   <parent>guacamole</parent>
-  <regex>User "(\S+)" connected to connection "(\S+)"\.</regex>
+  <regex>User "(\S+)" connected to connection "(\S+)"</regex>
   <order>user, connection_name</order>
 </decoder>

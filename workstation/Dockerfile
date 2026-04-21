@@ -14,11 +14,11 @@ RUN apt-get update && \
     apt-get -y install --no-install-recommends \
       xfce4 dbus-x11 \
       x11vnc xvfb xauth x11-utils \
-      wget git nano python3 python3-pip python3-websockify \
+      wget git nano python3 python3-pip python3-websockify python3-requests \
       ca-certificates supervisor sudo \
       net-tools procps pulseaudio-utils \
       git build-essential cmake qtbase5-dev \
-      openssh-server xrdp \
+      openssh-server xrdp iproute2 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 
@@ -94,13 +94,6 @@ RUN chown -R engineer:engineer /home/engineer
 
 
 COPY index.html /opt/noVNC/index.html
-
-# Playwright automation
-RUN pip3 install playwright pytest-playwright && \
-    playwright install chromium --with-deps
-
-COPY playwright_attack.py /home/engineer/playwright_attack.py
-RUN chown engineer:engineer /home/engineer/playwright_attack.py
 
 # Install Wazuh Agent
 RUN apt-get update && apt-get install -y curl gnupg2 apt-transport-https && \

@@ -1,0 +1,1820 @@
+==========================================
+  ZERO-TRUST OT LAB - 10 RUN STABILITY TEST
+==========================================
+
+[*] Creating results directory: test_runs_20260421_093643
+
+========== RUN 1 / 10 ==========
+[*] 2026-04-21 09:36:43 - Starting attack scenario iteration...
+[*] Running attack scenarios...
+==== SCENARIO A: OT Network & Protocol Reconnaissance Audit ====
+[*] Step 1: Auditing IDMZ Zone (Proxies & Gateways)...
+  [TIME] Action started at: 2026-04-21 09:36:43.440
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:36 +0000
+Nmap scan report for guacamole.localhost.pomerium.io (192.168.90.21)
+Host is up (0.000053s latency).
+
+PORT     STATE    SERVICE
+80/tcp   filtered http
+443/tcp  open     https
+8080/tcp filtered http-proxy
+
+Nmap scan report for 192.168.90.22 (192.168.90.22)
+Host is up.
+
+PORT     STATE    SERVICE
+80/tcp   filtered http
+443/tcp  filtered https
+8080/tcp filtered http-proxy
+
+Nmap done: 2 IP addresses (2 hosts up) scanned in 1.28 seconds
+
+[*] Step 2: Auditing Level 3 Ops Connectivity (EWS)...
+  [TIME] Action started at: 2026-04-21 09:36:44.821
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:36 +0000
+Nmap scan report for 192.168.97.5 (192.168.97.5)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+3389/tcp filtered ms-wbt-server
+
+Nmap done: 1 IP address (1 host up) scanned in 3.07 seconds
+
+[*] Step 3: Auditing Level 2 Supervisory Connectivity (HMI)...
+  [TIME] Action started at: 2026-04-21 09:36:47.999
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:36 +0000
+Nmap scan report for 192.168.96.10 (192.168.96.10)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+3389/tcp filtered ms-wbt-server
+8080/tcp filtered http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 3.06 seconds
+
+[*] Step 4: Auditing Level 1/0 Control Connectivity (PLC)...
+  [TIME] Action started at: 2026-04-21 09:36:51.155
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:36 +0000
+Nmap scan report for 192.168.95.2 (192.168.95.2)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+502/tcp  filtered mbap
+8080/tcp filtered http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 3.07 seconds
+
+[*] Step 5: Launching Mdbget (Modbus Scan) to extract PLC registers...
+  [TIME] Action started at: 2026-04-21 09:36:54.385
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+[*] [1/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [2/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [3/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [4/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [5/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+
+[*] Step 6: Attempting False Data Injection (Modbus Write) to hijack Reactor Setpoints...
+  [TIME] Action started at: 2026-04-21 09:37:11.733
+[*] [1/1] Executing False Data Injection (FDI) on Register 2 with Value 55555...
+[-] Failed to connect to PLC.
+Connection to (192.168.95.2, 502) failed: timed out
+[+] Scenario A complete. Verify that 'Filtered' results and 'Failed' writes correspond to SIEM 'FW DROP' logs.
+
+[0;31m==== SCENARIO B: Insider Threat — Machine Identity Sabotage ====[0m
+
+[*] Step 1: Navigating to Zero-Trust Gateway (Guacamole)...
+  [0;36m[TIME][0m 2026-04-21 09:37:15.118
+[*] Step 2: Opening remote desktop session (VNC) to EWS...
+  [0;36m[TIME][0m 2026-04-21 09:37:23.262
+  [i] Waiting for Guacamole VNC session to establish via Playwright...
+  [0;32m[SUCCESS][0m Guacamole connection established. Attacker now has desktop access to EWS.
+
+[*] Step 3: Modifying PLC program on EWS (chemical.st)...
+  [0;36m[TIME][0m 2026-04-21 09:37:29.864
+  [0;32m[+][0m chemical.st modified with sabotage values.
+[*] Step 4: Logging into PLC Console and uploading malicious program...
+  [0;36m[TIME][0m 2026-04-21 09:37:45.005
+  [i] Passing custom exploit tools from Kali to EWS...
+  [i] Executing automated PLC management commands...
+  [i] Initiating OAuth2 flow through Pomerium gateway...
+  [i] Submitting Keycloak credentials...
+  [+] Pomerium session established. Accessing PLC management console...
+  [+] PLC console login SUCCESSFUL — Suricata alert 1000101 should fire.
+  [+] Sabotaged program uploaded to PLC successfully.
+  [i] Triggering compilation...
+  [i] Waiting for compilation to complete...
+  [i] Starting PLC runtime...
+  [+] PLC compilation triggered and runtime started.
+  [+] PLC login attack step complete.
+  [i] Activating sabotage setpoint via PLC Modbus (pressure_sp = 65535)...
+  [+] pressure_sp forced to 65535 via Modbus FC6.
+  [0;32m[+][0m Sabotaged program active.
+[*] Step 5: Monitoring Reactor Pressure Increase (Physical Sabotage)...
+  [0;36m[TIME][0m 2026-04-21 09:38:00.801
+  [i] Sabotaged program active. Waiting for physical process impact...
+  [0;32m[+][0m Process impact window complete.
+[*] Step 6: Closing Guacamole session...
+
+[1;33m==== SCENARIO B COMPLETE ====[0m
+  [DETECTION SUMMARY — SCENARIO B]
+    - Zero-Trust Identity Verified (MFA Satisfied)
+    - PLC program file (chemical.st) modified on EWS (FIM)
+    - PLC Management Console: Successful Admin Login Detected
+    - Correlation: FIM change + PLC Console Access (Insider Threat)
+    - OT Anomaly: Reactor Pressure > 80%
+    - CRITICAL: Reactor Pressure > 95% (Explosion Risk)
+    - Full Kill-Chain: File Tampering + PLC Upload + Process Sabotage
+
+==== SCENARIO C: Identity Brute Force & MFA Enforcement ====
+[*] Step 1: Brute-forcing engineer credentials (wrong passwords)...
+  [TIME] Action started at: 2026-04-21 09:40:03.896
+  [+] 8 failed login attempts sent. Check Wazuh for rules 100502, 100520.
+
+[*] Step 2: Correct password WITHOUT OTP (MFA blocks access)...
+  [TIME] Action started at: 2026-04-21 09:40:04.740
+  [KEYCLOAK RESPONSE] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [!] Result: Access DENIED — password accepted but MFA requirement blocks token issuance.
+
+[*] Step 3: Correct password + WRONG OTP code (attacker guessing MFA)...
+  [TIME] Action started at: 2026-04-21 09:40:04.843
+  [OTP=123456] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [OTP=654321] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [OTP=000000] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [!] Result: Access DENIED — all OTP guesses rejected. MFA enforcement validated.
+[+] Scenario C complete. In a traditional OT lab, Step 2 alone would grant full access.
+
+==== FINAL STEP: GLOBAL SYSTEM RESTORATION ====
+[*] Step 7: Restoring PLC values to safe operating state...
+  [TIME] Action started at: 2026-04-21 09:40:05.173
+  [i] Initiating OAuth2 flow through Pomerium gateway...
+  [i] Submitting Keycloak credentials...
+  [+] Pomerium session established. Accessing PLC management console...
+  [+] PLC console login SUCCESSFUL — Suricata alert 1000101 should fire.
+  [+] Sabotaged program uploaded to PLC successfully.
+  [i] Triggering compilation...
+  [i] Waiting for compilation to complete...
+  [i] Starting PLC runtime...
+  [+] PLC compilation triggered and runtime started.
+  [+] PLC login attack step complete.
+[+] pressure_sp restored to 55295
+[+] PLC Values Restored. System Cleaned.
+
+==== ATTACK AUTOMATION COMPLETE ====
+[*] Run 'python3 calculate_dissertation_metrics.py' to generate the report.
+[*] Generating report with ID 1...
+[+] Report saved: test_runs_20260421_093643/dissertation_metrics_report_20260421_001.txt
+[*] Waiting 10s before next run...
+
+========== RUN 2 / 10 ==========
+[*] 2026-04-21 09:40:45 - Starting attack scenario iteration...
+[*] Running attack scenarios...
+==== SCENARIO A: OT Network & Protocol Reconnaissance Audit ====
+[*] Step 1: Auditing IDMZ Zone (Proxies & Gateways)...
+  [TIME] Action started at: 2026-04-21 09:40:46.014
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:40 +0000
+Nmap scan report for guacamole.localhost.pomerium.io (192.168.90.21)
+Host is up (0.000050s latency).
+
+PORT     STATE    SERVICE
+80/tcp   filtered http
+443/tcp  open     https
+8080/tcp filtered http-proxy
+
+Nmap scan report for 192.168.90.22 (192.168.90.22)
+Host is up.
+
+PORT     STATE    SERVICE
+80/tcp   filtered http
+443/tcp  filtered https
+8080/tcp filtered http-proxy
+
+Nmap done: 2 IP addresses (2 hosts up) scanned in 1.26 seconds
+
+[*] Step 2: Auditing Level 3 Ops Connectivity (EWS)...
+  [TIME] Action started at: 2026-04-21 09:40:47.469
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:40 +0000
+Nmap scan report for 192.168.97.5 (192.168.97.5)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+3389/tcp filtered ms-wbt-server
+
+Nmap done: 1 IP address (1 host up) scanned in 3.07 seconds
+
+[*] Step 3: Auditing Level 2 Supervisory Connectivity (HMI)...
+  [TIME] Action started at: 2026-04-21 09:40:50.621
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:40 +0000
+Nmap scan report for 192.168.96.10 (192.168.96.10)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+3389/tcp filtered ms-wbt-server
+8080/tcp filtered http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 3.07 seconds
+
+[*] Step 4: Auditing Level 1/0 Control Connectivity (PLC)...
+  [TIME] Action started at: 2026-04-21 09:40:53.781
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:40 +0000
+Nmap scan report for 192.168.95.2 (192.168.95.2)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+502/tcp  filtered mbap
+8080/tcp filtered http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 3.07 seconds
+
+[*] Step 5: Launching Mdbget (Modbus Scan) to extract PLC registers...
+  [TIME] Action started at: 2026-04-21 09:40:56.963
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+[*] [1/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [2/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [3/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [4/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [5/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+
+[*] Step 6: Attempting False Data Injection (Modbus Write) to hijack Reactor Setpoints...
+  [TIME] Action started at: 2026-04-21 09:41:14.396
+Connection to (192.168.95.2, 502) failed: timed out
+[*] [1/1] Executing False Data Injection (FDI) on Register 2 with Value 55555...
+[-] Failed to connect to PLC.
+[+] Scenario A complete. Verify that 'Filtered' results and 'Failed' writes correspond to SIEM 'FW DROP' logs.
+
+[0;31m==== SCENARIO B: Insider Threat — Machine Identity Sabotage ====[0m
+
+[*] Step 1: Navigating to Zero-Trust Gateway (Guacamole)...
+  [0;36m[TIME][0m 2026-04-21 09:41:17.778
+[*] Step 2: Opening remote desktop session (VNC) to EWS...
+  [0;36m[TIME][0m 2026-04-21 09:41:25.910
+  [i] Waiting for Guacamole VNC session to establish via Playwright...
+  [0;32m[SUCCESS][0m Guacamole connection established. Attacker now has desktop access to EWS.
+
+[*] Step 3: Modifying PLC program on EWS (chemical.st)...
+  [0;36m[TIME][0m 2026-04-21 09:41:32.742
+  [0;32m[+][0m chemical.st modified with sabotage values.
+[*] Step 4: Logging into PLC Console and uploading malicious program...
+  [0;36m[TIME][0m 2026-04-21 09:41:47.912
+  [i] Passing custom exploit tools from Kali to EWS...
+  [i] Executing automated PLC management commands...
+  [i] Initiating OAuth2 flow through Pomerium gateway...
+  [i] Submitting Keycloak credentials...
+  [+] Pomerium session established. Accessing PLC management console...
+  [+] PLC console login SUCCESSFUL — Suricata alert 1000101 should fire.
+  [+] Sabotaged program uploaded to PLC successfully.
+  [i] Triggering compilation...
+  [i] Waiting for compilation to complete...
+  [i] Starting PLC runtime...
+  [+] PLC compilation triggered and runtime started.
+  [+] PLC login attack step complete.
+  [i] Activating sabotage setpoint via PLC Modbus (pressure_sp = 65535)...
+  [+] pressure_sp forced to 65535 via Modbus FC6.
+  [0;32m[+][0m Sabotaged program active.
+[*] Step 5: Monitoring Reactor Pressure Increase (Physical Sabotage)...
+  [0;36m[TIME][0m 2026-04-21 09:42:03.750
+  [i] Sabotaged program active. Waiting for physical process impact...
+  [0;32m[+][0m Process impact window complete.
+[*] Step 6: Closing Guacamole session...
+
+[1;33m==== SCENARIO B COMPLETE ====[0m
+  [DETECTION SUMMARY — SCENARIO B]
+    - Zero-Trust Identity Verified (MFA Satisfied)
+    - PLC program file (chemical.st) modified on EWS (FIM)
+    - PLC Management Console: Successful Admin Login Detected
+    - Correlation: FIM change + PLC Console Access (Insider Threat)
+    - OT Anomaly: Reactor Pressure > 80%
+    - CRITICAL: Reactor Pressure > 95% (Explosion Risk)
+    - Full Kill-Chain: File Tampering + PLC Upload + Process Sabotage
+
+==== SCENARIO C: Identity Brute Force & MFA Enforcement ====
+[*] Step 1: Brute-forcing engineer credentials (wrong passwords)...
+  [TIME] Action started at: 2026-04-21 09:44:07.027
+  [+] 8 failed login attempts sent. Check Wazuh for rules 100502, 100520.
+
+[*] Step 2: Correct password WITHOUT OTP (MFA blocks access)...
+  [TIME] Action started at: 2026-04-21 09:44:08.010
+  [KEYCLOAK RESPONSE] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [!] Result: Access DENIED — password accepted but MFA requirement blocks token issuance.
+
+[*] Step 3: Correct password + WRONG OTP code (attacker guessing MFA)...
+  [TIME] Action started at: 2026-04-21 09:44:08.119
+  [OTP=123456] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [OTP=654321] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [OTP=000000] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [!] Result: Access DENIED — all OTP guesses rejected. MFA enforcement validated.
+[+] Scenario C complete. In a traditional OT lab, Step 2 alone would grant full access.
+
+==== FINAL STEP: GLOBAL SYSTEM RESTORATION ====
+[*] Step 7: Restoring PLC values to safe operating state...
+  [TIME] Action started at: 2026-04-21 09:44:08.441
+  [i] Initiating OAuth2 flow through Pomerium gateway...
+  [i] Submitting Keycloak credentials...
+  [+] Pomerium session established. Accessing PLC management console...
+  [+] PLC console login SUCCESSFUL — Suricata alert 1000101 should fire.
+  [+] Sabotaged program uploaded to PLC successfully.
+  [i] Triggering compilation...
+  [i] Waiting for compilation to complete...
+  [i] Starting PLC runtime...
+  [+] PLC compilation triggered and runtime started.
+  [+] PLC login attack step complete.
+[+] pressure_sp restored to 55295
+[+] PLC Values Restored. System Cleaned.
+
+==== ATTACK AUTOMATION COMPLETE ====
+[*] Run 'python3 calculate_dissertation_metrics.py' to generate the report.
+[*] Generating report with ID 2...
+[+] Report saved: test_runs_20260421_093643/dissertation_metrics_report_20260421_002.txt
+[*] Waiting 10s before next run...
+
+========== RUN 3 / 10 ==========
+[*] 2026-04-21 09:44:49 - Starting attack scenario iteration...
+[*] Running attack scenarios...
+==== SCENARIO A: OT Network & Protocol Reconnaissance Audit ====
+[*] Step 1: Auditing IDMZ Zone (Proxies & Gateways)...
+  [TIME] Action started at: 2026-04-21 09:44:49.192
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:44 +0000
+Nmap scan report for guacamole.localhost.pomerium.io (192.168.90.21)
+Host is up (0.00012s latency).
+
+PORT     STATE    SERVICE
+80/tcp   filtered http
+443/tcp  open     https
+8080/tcp filtered http-proxy
+
+Nmap scan report for 192.168.90.22 (192.168.90.22)
+Host is up.
+
+PORT     STATE    SERVICE
+80/tcp   filtered http
+443/tcp  filtered https
+8080/tcp filtered http-proxy
+
+Nmap done: 2 IP addresses (2 hosts up) scanned in 1.39 seconds
+
+[*] Step 2: Auditing Level 3 Ops Connectivity (EWS)...
+  [TIME] Action started at: 2026-04-21 09:44:50.766
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:44 +0000
+Nmap scan report for 192.168.97.5 (192.168.97.5)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+3389/tcp filtered ms-wbt-server
+
+Nmap done: 1 IP address (1 host up) scanned in 3.22 seconds
+
+[*] Step 3: Auditing Level 2 Supervisory Connectivity (HMI)...
+  [TIME] Action started at: 2026-04-21 09:44:54.129
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:44 +0000
+Nmap scan report for 192.168.96.10 (192.168.96.10)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+3389/tcp filtered ms-wbt-server
+8080/tcp filtered http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 3.28 seconds
+
+[*] Step 4: Auditing Level 1/0 Control Connectivity (PLC)...
+  [TIME] Action started at: 2026-04-21 09:44:57.662
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:44 +0000
+Nmap scan report for 192.168.95.2 (192.168.95.2)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+502/tcp  filtered mbap
+8080/tcp filtered http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 3.27 seconds
+
+[*] Step 5: Launching Mdbget (Modbus Scan) to extract PLC registers...
+  [TIME] Action started at: 2026-04-21 09:45:01.038
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+[*] [1/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [2/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [3/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [4/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [5/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+
+[*] Step 6: Attempting False Data Injection (Modbus Write) to hijack Reactor Setpoints...
+  [TIME] Action started at: 2026-04-21 09:45:18.355
+[*] [1/1] Executing False Data Injection (FDI) on Register 2 with Value 55555...
+[-] Failed to connect to PLC.
+Connection to (192.168.95.2, 502) failed: timed out
+[+] Scenario A complete. Verify that 'Filtered' results and 'Failed' writes correspond to SIEM 'FW DROP' logs.
+
+[0;31m==== SCENARIO B: Insider Threat — Machine Identity Sabotage ====[0m
+
+[*] Step 1: Navigating to Zero-Trust Gateway (Guacamole)...
+  [0;36m[TIME][0m 2026-04-21 09:45:21.902
+[*] Step 2: Opening remote desktop session (VNC) to EWS...
+  [0;36m[TIME][0m 2026-04-21 09:45:30.053
+  [i] Waiting for Guacamole VNC session to establish via Playwright...
+  [0;32m[SUCCESS][0m Guacamole connection established. Attacker now has desktop access to EWS.
+
+[*] Step 3: Modifying PLC program on EWS (chemical.st)...
+  [0;36m[TIME][0m 2026-04-21 09:45:36.703
+  [0;32m[+][0m chemical.st modified with sabotage values.
+[*] Step 4: Logging into PLC Console and uploading malicious program...
+  [0;36m[TIME][0m 2026-04-21 09:45:51.845
+  [i] Passing custom exploit tools from Kali to EWS...
+  [i] Executing automated PLC management commands...
+  [i] Initiating OAuth2 flow through Pomerium gateway...
+  [i] Submitting Keycloak credentials...
+  [+] Pomerium session established. Accessing PLC management console...
+  [+] PLC console login SUCCESSFUL — Suricata alert 1000101 should fire.
+  [+] Sabotaged program uploaded to PLC successfully.
+  [i] Triggering compilation...
+  [i] Waiting for compilation to complete...
+  [i] Starting PLC runtime...
+  [+] PLC compilation triggered and runtime started.
+  [+] PLC login attack step complete.
+  [i] Activating sabotage setpoint via PLC Modbus (pressure_sp = 65535)...
+  [+] pressure_sp forced to 65535 via Modbus FC6.
+  [0;32m[+][0m Sabotaged program active.
+[*] Step 5: Monitoring Reactor Pressure Increase (Physical Sabotage)...
+  [0;36m[TIME][0m 2026-04-21 09:46:07.313
+  [i] Sabotaged program active. Waiting for physical process impact...
+  [0;32m[+][0m Process impact window complete.
+[*] Step 6: Closing Guacamole session...
+
+[1;33m==== SCENARIO B COMPLETE ====[0m
+  [DETECTION SUMMARY — SCENARIO B]
+    - Zero-Trust Identity Verified (MFA Satisfied)
+    - PLC program file (chemical.st) modified on EWS (FIM)
+    - PLC Management Console: Successful Admin Login Detected
+    - Correlation: FIM change + PLC Console Access (Insider Threat)
+    - OT Anomaly: Reactor Pressure > 80%
+    - CRITICAL: Reactor Pressure > 95% (Explosion Risk)
+    - Full Kill-Chain: File Tampering + PLC Upload + Process Sabotage
+
+==== SCENARIO C: Identity Brute Force & MFA Enforcement ====
+[*] Step 1: Brute-forcing engineer credentials (wrong passwords)...
+  [TIME] Action started at: 2026-04-21 09:48:10.447
+  [+] 8 failed login attempts sent. Check Wazuh for rules 100502, 100520.
+
+[*] Step 2: Correct password WITHOUT OTP (MFA blocks access)...
+  [TIME] Action started at: 2026-04-21 09:48:11.491
+  [KEYCLOAK RESPONSE] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [!] Result: Access DENIED — password accepted but MFA requirement blocks token issuance.
+
+[*] Step 3: Correct password + WRONG OTP code (attacker guessing MFA)...
+  [TIME] Action started at: 2026-04-21 09:48:11.592
+  [OTP=123456] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [OTP=654321] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [OTP=000000] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [!] Result: Access DENIED — all OTP guesses rejected. MFA enforcement validated.
+[+] Scenario C complete. In a traditional OT lab, Step 2 alone would grant full access.
+
+==== FINAL STEP: GLOBAL SYSTEM RESTORATION ====
+[*] Step 7: Restoring PLC values to safe operating state...
+  [TIME] Action started at: 2026-04-21 09:48:11.903
+  [i] Initiating OAuth2 flow through Pomerium gateway...
+  [i] Submitting Keycloak credentials...
+  [+] Pomerium session established. Accessing PLC management console...
+  [+] PLC console login SUCCESSFUL — Suricata alert 1000101 should fire.
+  [+] Sabotaged program uploaded to PLC successfully.
+  [i] Triggering compilation...
+  [i] Waiting for compilation to complete...
+  [i] Starting PLC runtime...
+  [+] PLC compilation triggered and runtime started.
+  [+] PLC login attack step complete.
+[+] pressure_sp restored to 55295
+[+] PLC Values Restored. System Cleaned.
+
+==== ATTACK AUTOMATION COMPLETE ====
+[*] Run 'python3 calculate_dissertation_metrics.py' to generate the report.
+[*] Generating report with ID 3...
+[+] Report saved: test_runs_20260421_093643/dissertation_metrics_report_20260421_003.txt
+[*] Waiting 10s before next run...
+
+========== RUN 4 / 10 ==========
+[*] 2026-04-21 09:49:10 - Starting attack scenario iteration...
+[*] Running attack scenarios...
+==== SCENARIO A: OT Network & Protocol Reconnaissance Audit ====
+[*] Step 1: Auditing IDMZ Zone (Proxies & Gateways)...
+  [TIME] Action started at: 2026-04-21 09:49:10.663
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:49 +0000
+Nmap scan report for guacamole.localhost.pomerium.io (192.168.90.21)
+Host is up (0.00017s latency).
+
+PORT     STATE    SERVICE
+80/tcp   filtered http
+443/tcp  open     https
+8080/tcp filtered http-proxy
+
+Nmap scan report for 192.168.90.22 (192.168.90.22)
+Host is up.
+
+PORT     STATE    SERVICE
+80/tcp   filtered http
+443/tcp  filtered https
+8080/tcp filtered http-proxy
+
+Nmap done: 2 IP addresses (2 hosts up) scanned in 1.42 seconds
+
+[*] Step 2: Auditing Level 3 Ops Connectivity (EWS)...
+  [TIME] Action started at: 2026-04-21 09:49:12.208
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:49 +0000
+Nmap scan report for 192.168.97.5 (192.168.97.5)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+3389/tcp filtered ms-wbt-server
+
+Nmap done: 1 IP address (1 host up) scanned in 3.24 seconds
+
+[*] Step 3: Auditing Level 2 Supervisory Connectivity (HMI)...
+  [TIME] Action started at: 2026-04-21 09:49:15.678
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:49 +0000
+Nmap scan report for 192.168.96.10 (192.168.96.10)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+3389/tcp filtered ms-wbt-server
+8080/tcp filtered http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 3.09 seconds
+
+[*] Step 4: Auditing Level 1/0 Control Connectivity (PLC)...
+  [TIME] Action started at: 2026-04-21 09:49:19.050
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:49 +0000
+Nmap scan report for 192.168.95.2 (192.168.95.2)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+502/tcp  filtered mbap
+8080/tcp filtered http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 3.22 seconds
+
+[*] Step 5: Launching Mdbget (Modbus Scan) to extract PLC registers...
+  [TIME] Action started at: 2026-04-21 09:49:22.434
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+[*] [1/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [2/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [3/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [4/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [5/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+
+[*] Step 6: Attempting False Data Injection (Modbus Write) to hijack Reactor Setpoints...
+  [TIME] Action started at: 2026-04-21 09:49:39.886
+Connection to (192.168.95.2, 502) failed: timed out
+[*] [1/1] Executing False Data Injection (FDI) on Register 2 with Value 55555...
+[-] Failed to connect to PLC.
+[+] Scenario A complete. Verify that 'Filtered' results and 'Failed' writes correspond to SIEM 'FW DROP' logs.
+
+[0;31m==== SCENARIO B: Insider Threat — Machine Identity Sabotage ====[0m
+
+[*] Step 1: Navigating to Zero-Trust Gateway (Guacamole)...
+  [0;36m[TIME][0m 2026-04-21 09:49:43.414
+[*] Step 2: Opening remote desktop session (VNC) to EWS...
+  [0;36m[TIME][0m 2026-04-21 09:49:51.544
+  [i] Waiting for Guacamole VNC session to establish via Playwright...
+  [0;32m[SUCCESS][0m Guacamole connection established. Attacker now has desktop access to EWS.
+
+[*] Step 3: Modifying PLC program on EWS (chemical.st)...
+  [0;36m[TIME][0m 2026-04-21 09:49:58.143
+  [0;32m[+][0m chemical.st modified with sabotage values.
+[*] Step 4: Logging into PLC Console and uploading malicious program...
+  [0;36m[TIME][0m 2026-04-21 09:50:13.285
+  [i] Passing custom exploit tools from Kali to EWS...
+  [i] Executing automated PLC management commands...
+  [i] Initiating OAuth2 flow through Pomerium gateway...
+  [i] Submitting Keycloak credentials...
+  [+] Pomerium session established. Accessing PLC management console...
+  [+] PLC console login SUCCESSFUL — Suricata alert 1000101 should fire.
+  [+] Sabotaged program uploaded to PLC successfully.
+  [i] Triggering compilation...
+  [i] Waiting for compilation to complete...
+  [i] Starting PLC runtime...
+  [+] PLC compilation triggered and runtime started.
+  [+] PLC login attack step complete.
+  [i] Activating sabotage setpoint via PLC Modbus (pressure_sp = 65535)...
+  [+] pressure_sp forced to 65535 via Modbus FC6.
+  [0;32m[+][0m Sabotaged program active.
+[*] Step 5: Monitoring Reactor Pressure Increase (Physical Sabotage)...
+  [0;36m[TIME][0m 2026-04-21 09:50:28.849
+  [i] Sabotaged program active. Waiting for physical process impact...
+  [0;32m[+][0m Process impact window complete.
+[*] Step 6: Closing Guacamole session...
+
+[1;33m==== SCENARIO B COMPLETE ====[0m
+  [DETECTION SUMMARY — SCENARIO B]
+    - Zero-Trust Identity Verified (MFA Satisfied)
+    - PLC program file (chemical.st) modified on EWS (FIM)
+    - PLC Management Console: Successful Admin Login Detected
+    - Correlation: FIM change + PLC Console Access (Insider Threat)
+    - OT Anomaly: Reactor Pressure > 80%
+    - CRITICAL: Reactor Pressure > 95% (Explosion Risk)
+    - Full Kill-Chain: File Tampering + PLC Upload + Process Sabotage
+
+==== SCENARIO C: Identity Brute Force & MFA Enforcement ====
+[*] Step 1: Brute-forcing engineer credentials (wrong passwords)...
+  [TIME] Action started at: 2026-04-21 09:52:32.121
+  [+] 8 failed login attempts sent. Check Wazuh for rules 100502, 100520.
+
+[*] Step 2: Correct password WITHOUT OTP (MFA blocks access)...
+  [TIME] Action started at: 2026-04-21 09:52:32.943
+  [KEYCLOAK RESPONSE] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [!] Result: Access DENIED — password accepted but MFA requirement blocks token issuance.
+
+[*] Step 3: Correct password + WRONG OTP code (attacker guessing MFA)...
+  [TIME] Action started at: 2026-04-21 09:52:33.045
+  [OTP=123456] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [OTP=654321] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [OTP=000000] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [!] Result: Access DENIED — all OTP guesses rejected. MFA enforcement validated.
+[+] Scenario C complete. In a traditional OT lab, Step 2 alone would grant full access.
+
+==== FINAL STEP: GLOBAL SYSTEM RESTORATION ====
+[*] Step 7: Restoring PLC values to safe operating state...
+  [TIME] Action started at: 2026-04-21 09:52:33.345
+  [i] Initiating OAuth2 flow through Pomerium gateway...
+  [i] Submitting Keycloak credentials...
+  [+] Pomerium session established. Accessing PLC management console...
+  [+] PLC console login SUCCESSFUL — Suricata alert 1000101 should fire.
+  [+] Sabotaged program uploaded to PLC successfully.
+  [i] Triggering compilation...
+  [i] Waiting for compilation to complete...
+  [i] Starting PLC runtime...
+  [+] PLC compilation triggered and runtime started.
+  [+] PLC login attack step complete.
+[+] pressure_sp restored to 55295
+[+] PLC Values Restored. System Cleaned.
+
+==== ATTACK AUTOMATION COMPLETE ====
+[*] Run 'python3 calculate_dissertation_metrics.py' to generate the report.
+[*] Generating report with ID 4...
+[+] Report saved: test_runs_20260421_093643/dissertation_metrics_report_20260421_004.txt
+[*] Waiting 10s before next run...
+
+========== RUN 5 / 10 ==========
+[*] 2026-04-21 09:53:14 - Starting attack scenario iteration...
+[*] Running attack scenarios...
+==== SCENARIO A: OT Network & Protocol Reconnaissance Audit ====
+[*] Step 1: Auditing IDMZ Zone (Proxies & Gateways)...
+  [TIME] Action started at: 2026-04-21 09:53:14.032
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:53 +0000
+Nmap scan report for guacamole.localhost.pomerium.io (192.168.90.21)
+Host is up (0.000046s latency).
+
+PORT     STATE    SERVICE
+80/tcp   filtered http
+443/tcp  open     https
+8080/tcp filtered http-proxy
+
+Nmap scan report for 192.168.90.22 (192.168.90.22)
+Host is up.
+
+PORT     STATE    SERVICE
+80/tcp   filtered http
+443/tcp  filtered https
+8080/tcp filtered http-proxy
+
+Nmap done: 2 IP addresses (2 hosts up) scanned in 1.28 seconds
+
+[*] Step 2: Auditing Level 3 Ops Connectivity (EWS)...
+  [TIME] Action started at: 2026-04-21 09:53:15.412
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:53 +0000
+Nmap scan report for 192.168.97.5 (192.168.97.5)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+3389/tcp filtered ms-wbt-server
+
+Nmap done: 1 IP address (1 host up) scanned in 3.10 seconds
+
+[*] Step 3: Auditing Level 2 Supervisory Connectivity (HMI)...
+  [TIME] Action started at: 2026-04-21 09:53:18.602
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:53 +0000
+Nmap scan report for 192.168.96.10 (192.168.96.10)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+3389/tcp filtered ms-wbt-server
+8080/tcp filtered http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 3.22 seconds
+
+[*] Step 4: Auditing Level 1/0 Control Connectivity (PLC)...
+  [TIME] Action started at: 2026-04-21 09:53:21.915
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:53 +0000
+Nmap scan report for 192.168.95.2 (192.168.95.2)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+502/tcp  filtered mbap
+8080/tcp filtered http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 3.12 seconds
+
+[*] Step 5: Launching Mdbget (Modbus Scan) to extract PLC registers...
+  [TIME] Action started at: 2026-04-21 09:53:25.144
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+[*] [1/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [2/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [3/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [4/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [5/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+
+[*] Step 6: Attempting False Data Injection (Modbus Write) to hijack Reactor Setpoints...
+  [TIME] Action started at: 2026-04-21 09:53:42.436
+Connection to (192.168.95.2, 502) failed: timed out
+[*] [1/1] Executing False Data Injection (FDI) on Register 2 with Value 55555...
+[-] Failed to connect to PLC.
+[+] Scenario A complete. Verify that 'Filtered' results and 'Failed' writes correspond to SIEM 'FW DROP' logs.
+
+[0;31m==== SCENARIO B: Insider Threat — Machine Identity Sabotage ====[0m
+
+[*] Step 1: Navigating to Zero-Trust Gateway (Guacamole)...
+  [0;36m[TIME][0m 2026-04-21 09:53:45.923
+[*] Step 2: Opening remote desktop session (VNC) to EWS...
+  [0;36m[TIME][0m 2026-04-21 09:53:54.054
+  [i] Waiting for Guacamole VNC session to establish via Playwright...
+  [0;32m[SUCCESS][0m Guacamole connection established. Attacker now has desktop access to EWS.
+
+[*] Step 3: Modifying PLC program on EWS (chemical.st)...
+  [0;36m[TIME][0m 2026-04-21 09:54:00.462
+  [0;32m[+][0m chemical.st modified with sabotage values.
+[*] Step 4: Logging into PLC Console and uploading malicious program...
+  [0;36m[TIME][0m 2026-04-21 09:54:15.631
+  [i] Passing custom exploit tools from Kali to EWS...
+  [i] Executing automated PLC management commands...
+  [i] Initiating OAuth2 flow through Pomerium gateway...
+  [i] Submitting Keycloak credentials...
+  [+] Pomerium session established. Accessing PLC management console...
+  [+] PLC console login SUCCESSFUL — Suricata alert 1000101 should fire.
+  [+] Sabotaged program uploaded to PLC successfully.
+  [i] Triggering compilation...
+  [i] Waiting for compilation to complete...
+  [i] Starting PLC runtime...
+  [+] PLC compilation triggered and runtime started.
+  [+] PLC login attack step complete.
+  [i] Activating sabotage setpoint via PLC Modbus (pressure_sp = 65535)...
+  [+] pressure_sp forced to 65535 via Modbus FC6.
+  [0;32m[+][0m Sabotaged program active.
+[*] Step 5: Monitoring Reactor Pressure Increase (Physical Sabotage)...
+  [0;36m[TIME][0m 2026-04-21 09:54:31.256
+  [i] Sabotaged program active. Waiting for physical process impact...
+  [0;32m[+][0m Process impact window complete.
+[*] Step 6: Closing Guacamole session...
+
+[1;33m==== SCENARIO B COMPLETE ====[0m
+  [DETECTION SUMMARY — SCENARIO B]
+    - Zero-Trust Identity Verified (MFA Satisfied)
+    - PLC program file (chemical.st) modified on EWS (FIM)
+    - PLC Management Console: Successful Admin Login Detected
+    - Correlation: FIM change + PLC Console Access (Insider Threat)
+    - OT Anomaly: Reactor Pressure > 80%
+    - CRITICAL: Reactor Pressure > 95% (Explosion Risk)
+    - Full Kill-Chain: File Tampering + PLC Upload + Process Sabotage
+
+==== SCENARIO C: Identity Brute Force & MFA Enforcement ====
+[*] Step 1: Brute-forcing engineer credentials (wrong passwords)...
+  [TIME] Action started at: 2026-04-21 09:56:34.472
+  [+] 8 failed login attempts sent. Check Wazuh for rules 100502, 100520.
+
+[*] Step 2: Correct password WITHOUT OTP (MFA blocks access)...
+  [TIME] Action started at: 2026-04-21 09:56:35.398
+  [KEYCLOAK RESPONSE] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [!] Result: Access DENIED — password accepted but MFA requirement blocks token issuance.
+
+[*] Step 3: Correct password + WRONG OTP code (attacker guessing MFA)...
+  [TIME] Action started at: 2026-04-21 09:56:35.500
+  [OTP=123456] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [OTP=654321] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [OTP=000000] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [!] Result: Access DENIED — all OTP guesses rejected. MFA enforcement validated.
+[+] Scenario C complete. In a traditional OT lab, Step 2 alone would grant full access.
+
+==== FINAL STEP: GLOBAL SYSTEM RESTORATION ====
+[*] Step 7: Restoring PLC values to safe operating state...
+  [TIME] Action started at: 2026-04-21 09:56:35.809
+  [i] Initiating OAuth2 flow through Pomerium gateway...
+  [i] Submitting Keycloak credentials...
+  [+] Pomerium session established. Accessing PLC management console...
+  [+] PLC console login SUCCESSFUL — Suricata alert 1000101 should fire.
+  [+] Sabotaged program uploaded to PLC successfully.
+  [i] Triggering compilation...
+  [i] Waiting for compilation to complete...
+  [i] Starting PLC runtime...
+  [+] PLC compilation triggered and runtime started.
+  [+] PLC login attack step complete.
+[+] pressure_sp restored to 55295
+[+] PLC Values Restored. System Cleaned.
+
+==== ATTACK AUTOMATION COMPLETE ====
+[*] Run 'python3 calculate_dissertation_metrics.py' to generate the report.
+[*] Generating report with ID 5...
+[+] Report saved: test_runs_20260421_093643/dissertation_metrics_report_20260421_005.txt
+[*] Waiting 10s before next run...
+
+========== RUN 6 / 10 ==========
+[*] 2026-04-21 09:57:16 - Starting attack scenario iteration...
+[*] Running attack scenarios...
+==== SCENARIO A: OT Network & Protocol Reconnaissance Audit ====
+[*] Step 1: Auditing IDMZ Zone (Proxies & Gateways)...
+  [TIME] Action started at: 2026-04-21 09:57:16.520
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:57 +0000
+Nmap scan report for guacamole.localhost.pomerium.io (192.168.90.21)
+Host is up (0.000056s latency).
+
+PORT     STATE    SERVICE
+80/tcp   filtered http
+443/tcp  open     https
+8080/tcp filtered http-proxy
+
+Nmap scan report for 192.168.90.22 (192.168.90.22)
+Host is up.
+
+PORT     STATE    SERVICE
+80/tcp   filtered http
+443/tcp  filtered https
+8080/tcp filtered http-proxy
+
+Nmap done: 2 IP addresses (2 hosts up) scanned in 1.36 seconds
+
+[*] Step 2: Auditing Level 3 Ops Connectivity (EWS)...
+  [TIME] Action started at: 2026-04-21 09:57:17.979
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:57 +0000
+Nmap scan report for 192.168.97.5 (192.168.97.5)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+3389/tcp filtered ms-wbt-server
+
+Nmap done: 1 IP address (1 host up) scanned in 3.39 seconds
+
+[*] Step 3: Auditing Level 2 Supervisory Connectivity (HMI)...
+  [TIME] Action started at: 2026-04-21 09:57:21.508
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:57 +0000
+Nmap scan report for 192.168.96.10 (192.168.96.10)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+3389/tcp filtered ms-wbt-server
+8080/tcp filtered http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 3.27 seconds
+
+[*] Step 4: Auditing Level 1/0 Control Connectivity (PLC)...
+  [TIME] Action started at: 2026-04-21 09:57:24.892
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 06:57 +0000
+Nmap scan report for 192.168.95.2 (192.168.95.2)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+502/tcp  filtered mbap
+8080/tcp filtered http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 3.14 seconds
+
+[*] Step 5: Launching Mdbget (Modbus Scan) to extract PLC registers...
+  [TIME] Action started at: 2026-04-21 09:57:28.137
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+[*] [1/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [2/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [3/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [4/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [5/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+
+[*] Step 6: Attempting False Data Injection (Modbus Write) to hijack Reactor Setpoints...
+  [TIME] Action started at: 2026-04-21 09:57:45.383
+[*] [1/1] Executing False Data Injection (FDI) on Register 2 with Value 55555...
+[-] Failed to connect to PLC.
+Connection to (192.168.95.2, 502) failed: timed out
+[+] Scenario A complete. Verify that 'Filtered' results and 'Failed' writes correspond to SIEM 'FW DROP' logs.
+
+[0;31m==== SCENARIO B: Insider Threat — Machine Identity Sabotage ====[0m
+
+[*] Step 1: Navigating to Zero-Trust Gateway (Guacamole)...
+  [0;36m[TIME][0m 2026-04-21 09:57:48.730
+[*] Step 2: Opening remote desktop session (VNC) to EWS...
+  [0;36m[TIME][0m 2026-04-21 09:57:56.869
+  [i] Waiting for Guacamole VNC session to establish via Playwright...
+  [0;32m[SUCCESS][0m Guacamole connection established. Attacker now has desktop access to EWS.
+
+[*] Step 3: Modifying PLC program on EWS (chemical.st)...
+  [0;36m[TIME][0m 2026-04-21 09:58:03.419
+  [0;32m[+][0m chemical.st modified with sabotage values.
+[*] Step 4: Logging into PLC Console and uploading malicious program...
+  [0;36m[TIME][0m 2026-04-21 09:58:18.559
+  [i] Passing custom exploit tools from Kali to EWS...
+  [i] Executing automated PLC management commands...
+  [i] Initiating OAuth2 flow through Pomerium gateway...
+  [i] Submitting Keycloak credentials...
+  [+] Pomerium session established. Accessing PLC management console...
+  [+] PLC console login SUCCESSFUL — Suricata alert 1000101 should fire.
+  [+] Sabotaged program uploaded to PLC successfully.
+  [i] Triggering compilation...
+  [i] Waiting for compilation to complete...
+  [i] Starting PLC runtime...
+  [+] PLC compilation triggered and runtime started.
+  [+] PLC login attack step complete.
+  [i] Activating sabotage setpoint via PLC Modbus (pressure_sp = 65535)...
+  [+] pressure_sp forced to 65535 via Modbus FC6.
+  [0;32m[+][0m Sabotaged program active.
+[*] Step 5: Monitoring Reactor Pressure Increase (Physical Sabotage)...
+  [0;36m[TIME][0m 2026-04-21 09:58:34.317
+  [i] Sabotaged program active. Waiting for physical process impact...
+  [0;32m[+][0m Process impact window complete.
+[*] Step 6: Closing Guacamole session...
+
+[1;33m==== SCENARIO B COMPLETE ====[0m
+  [DETECTION SUMMARY — SCENARIO B]
+    - Zero-Trust Identity Verified (MFA Satisfied)
+    - PLC program file (chemical.st) modified on EWS (FIM)
+    - PLC Management Console: Successful Admin Login Detected
+    - Correlation: FIM change + PLC Console Access (Insider Threat)
+    - OT Anomaly: Reactor Pressure > 80%
+    - CRITICAL: Reactor Pressure > 95% (Explosion Risk)
+    - Full Kill-Chain: File Tampering + PLC Upload + Process Sabotage
+
+==== SCENARIO C: Identity Brute Force & MFA Enforcement ====
+[*] Step 1: Brute-forcing engineer credentials (wrong passwords)...
+  [TIME] Action started at: 2026-04-21 10:00:37.563
+  [+] 8 failed login attempts sent. Check Wazuh for rules 100502, 100520.
+
+[*] Step 2: Correct password WITHOUT OTP (MFA blocks access)...
+  [TIME] Action started at: 2026-04-21 10:00:38.412
+  [KEYCLOAK RESPONSE] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [!] Result: Access DENIED — password accepted but MFA requirement blocks token issuance.
+
+[*] Step 3: Correct password + WRONG OTP code (attacker guessing MFA)...
+  [TIME] Action started at: 2026-04-21 10:00:38.541
+  [OTP=123456] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [OTP=654321] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [OTP=000000] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [!] Result: Access DENIED — all OTP guesses rejected. MFA enforcement validated.
+[+] Scenario C complete. In a traditional OT lab, Step 2 alone would grant full access.
+
+==== FINAL STEP: GLOBAL SYSTEM RESTORATION ====
+[*] Step 7: Restoring PLC values to safe operating state...
+  [TIME] Action started at: 2026-04-21 10:00:38.882
+  [i] Initiating OAuth2 flow through Pomerium gateway...
+  [i] Submitting Keycloak credentials...
+  [+] Pomerium session established. Accessing PLC management console...
+  [+] PLC console login SUCCESSFUL — Suricata alert 1000101 should fire.
+  [+] Sabotaged program uploaded to PLC successfully.
+  [i] Triggering compilation...
+  [i] Waiting for compilation to complete...
+  [i] Starting PLC runtime...
+  [+] PLC compilation triggered and runtime started.
+  [+] PLC login attack step complete.
+[+] pressure_sp restored to 55295
+[+] PLC Values Restored. System Cleaned.
+
+==== ATTACK AUTOMATION COMPLETE ====
+[*] Run 'python3 calculate_dissertation_metrics.py' to generate the report.
+[*] Generating report with ID 6...
+[+] Report saved: test_runs_20260421_093643/dissertation_metrics_report_20260421_006.txt
+[*] Waiting 10s before next run...
+
+========== RUN 7 / 10 ==========
+[*] 2026-04-21 10:01:19 - Starting attack scenario iteration...
+[*] Running attack scenarios...
+==== SCENARIO A: OT Network & Protocol Reconnaissance Audit ====
+[*] Step 1: Auditing IDMZ Zone (Proxies & Gateways)...
+  [TIME] Action started at: 2026-04-21 10:01:19.760
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 07:01 +0000
+Nmap scan report for guacamole.localhost.pomerium.io (192.168.90.21)
+Host is up (0.00013s latency).
+
+PORT     STATE    SERVICE
+80/tcp   filtered http
+443/tcp  open     https
+8080/tcp filtered http-proxy
+
+Nmap scan report for 192.168.90.22 (192.168.90.22)
+Host is up.
+
+PORT     STATE    SERVICE
+80/tcp   filtered http
+443/tcp  filtered https
+8080/tcp filtered http-proxy
+
+Nmap done: 2 IP addresses (2 hosts up) scanned in 1.50 seconds
+
+[*] Step 2: Auditing Level 3 Ops Connectivity (EWS)...
+  [TIME] Action started at: 2026-04-21 10:01:21.389
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 07:01 +0000
+Nmap scan report for 192.168.97.5 (192.168.97.5)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+3389/tcp filtered ms-wbt-server
+
+Nmap done: 1 IP address (1 host up) scanned in 3.10 seconds
+
+[*] Step 3: Auditing Level 2 Supervisory Connectivity (HMI)...
+  [TIME] Action started at: 2026-04-21 10:01:24.671
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 07:01 +0000
+Nmap scan report for 192.168.96.10 (192.168.96.10)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+3389/tcp filtered ms-wbt-server
+8080/tcp filtered http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 3.27 seconds
+
+[*] Step 4: Auditing Level 1/0 Control Connectivity (PLC)...
+  [TIME] Action started at: 2026-04-21 10:01:28.067
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 07:01 +0000
+Nmap scan report for 192.168.95.2 (192.168.95.2)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+502/tcp  filtered mbap
+8080/tcp filtered http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 3.19 seconds
+
+[*] Step 5: Launching Mdbget (Modbus Scan) to extract PLC registers...
+  [TIME] Action started at: 2026-04-21 10:01:31.414
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+[*] [1/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [2/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [3/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [4/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [5/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+
+[*] Step 6: Attempting False Data Injection (Modbus Write) to hijack Reactor Setpoints...
+  [TIME] Action started at: 2026-04-21 10:01:48.705
+Connection to (192.168.95.2, 502) failed: timed out
+[*] [1/1] Executing False Data Injection (FDI) on Register 2 with Value 55555...
+[-] Failed to connect to PLC.
+[+] Scenario A complete. Verify that 'Filtered' results and 'Failed' writes correspond to SIEM 'FW DROP' logs.
+
+[0;31m==== SCENARIO B: Insider Threat — Machine Identity Sabotage ====[0m
+
+[*] Step 1: Navigating to Zero-Trust Gateway (Guacamole)...
+  [0;36m[TIME][0m 2026-04-21 10:01:52.184
+[*] Step 2: Opening remote desktop session (VNC) to EWS...
+  [0;36m[TIME][0m 2026-04-21 10:02:00.342
+  [i] Waiting for Guacamole VNC session to establish via Playwright...
+  [0;32m[SUCCESS][0m Guacamole connection established. Attacker now has desktop access to EWS.
+
+[*] Step 3: Modifying PLC program on EWS (chemical.st)...
+  [0;36m[TIME][0m 2026-04-21 10:02:07.222
+  [0;32m[+][0m chemical.st modified with sabotage values.
+[*] Step 4: Logging into PLC Console and uploading malicious program...
+  [0;36m[TIME][0m 2026-04-21 10:02:22.386
+  [i] Passing custom exploit tools from Kali to EWS...
+  [i] Executing automated PLC management commands...
+  [i] Initiating OAuth2 flow through Pomerium gateway...
+  [i] Submitting Keycloak credentials...
+  [+] Pomerium session established. Accessing PLC management console...
+  [+] PLC console login SUCCESSFUL — Suricata alert 1000101 should fire.
+  [+] Sabotaged program uploaded to PLC successfully.
+  [i] Triggering compilation...
+  [i] Waiting for compilation to complete...
+  [i] Starting PLC runtime...
+  [+] PLC compilation triggered and runtime started.
+  [+] PLC login attack step complete.
+  [i] Activating sabotage setpoint via PLC Modbus (pressure_sp = 65535)...
+  [+] pressure_sp forced to 65535 via Modbus FC6.
+  [0;32m[+][0m Sabotaged program active.
+[*] Step 5: Monitoring Reactor Pressure Increase (Physical Sabotage)...
+  [0;36m[TIME][0m 2026-04-21 10:02:37.854
+  [i] Sabotaged program active. Waiting for physical process impact...
+  [0;32m[+][0m Process impact window complete.
+[*] Step 6: Closing Guacamole session...
+
+[1;33m==== SCENARIO B COMPLETE ====[0m
+  [DETECTION SUMMARY — SCENARIO B]
+    - Zero-Trust Identity Verified (MFA Satisfied)
+    - PLC program file (chemical.st) modified on EWS (FIM)
+    - PLC Management Console: Successful Admin Login Detected
+    - Correlation: FIM change + PLC Console Access (Insider Threat)
+    - OT Anomaly: Reactor Pressure > 80%
+    - CRITICAL: Reactor Pressure > 95% (Explosion Risk)
+    - Full Kill-Chain: File Tampering + PLC Upload + Process Sabotage
+
+==== SCENARIO C: Identity Brute Force & MFA Enforcement ====
+[*] Step 1: Brute-forcing engineer credentials (wrong passwords)...
+  [TIME] Action started at: 2026-04-21 10:04:41.087
+  [+] 8 failed login attempts sent. Check Wazuh for rules 100502, 100520.
+
+[*] Step 2: Correct password WITHOUT OTP (MFA blocks access)...
+  [TIME] Action started at: 2026-04-21 10:04:42.022
+  [KEYCLOAK RESPONSE] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [!] Result: Access DENIED — password accepted but MFA requirement blocks token issuance.
+
+[*] Step 3: Correct password + WRONG OTP code (attacker guessing MFA)...
+  [TIME] Action started at: 2026-04-21 10:04:42.129
+  [OTP=123456] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [OTP=654321] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [OTP=000000] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [!] Result: Access DENIED — all OTP guesses rejected. MFA enforcement validated.
+[+] Scenario C complete. In a traditional OT lab, Step 2 alone would grant full access.
+
+==== FINAL STEP: GLOBAL SYSTEM RESTORATION ====
+[*] Step 7: Restoring PLC values to safe operating state...
+  [TIME] Action started at: 2026-04-21 10:04:42.450
+  [i] Initiating OAuth2 flow through Pomerium gateway...
+  [i] Submitting Keycloak credentials...
+  [+] Pomerium session established. Accessing PLC management console...
+  [+] PLC console login SUCCESSFUL — Suricata alert 1000101 should fire.
+  [+] Sabotaged program uploaded to PLC successfully.
+  [i] Triggering compilation...
+  [i] Waiting for compilation to complete...
+  [i] Starting PLC runtime...
+  [+] PLC compilation triggered and runtime started.
+  [+] PLC login attack step complete.
+[+] pressure_sp restored to 55295
+[+] PLC Values Restored. System Cleaned.
+
+==== ATTACK AUTOMATION COMPLETE ====
+[*] Run 'python3 calculate_dissertation_metrics.py' to generate the report.
+[*] Generating report with ID 7...
+[+] Report saved: test_runs_20260421_093643/dissertation_metrics_report_20260421_007.txt
+[*] Waiting 10s before next run...
+
+========== RUN 8 / 10 ==========
+[*] 2026-04-21 10:05:23 - Starting attack scenario iteration...
+[*] Running attack scenarios...
+==== SCENARIO A: OT Network & Protocol Reconnaissance Audit ====
+[*] Step 1: Auditing IDMZ Zone (Proxies & Gateways)...
+  [TIME] Action started at: 2026-04-21 10:05:23.251
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 07:05 +0000
+Nmap scan report for guacamole.localhost.pomerium.io (192.168.90.21)
+Host is up (0.000048s latency).
+
+PORT     STATE    SERVICE
+80/tcp   filtered http
+443/tcp  open     https
+8080/tcp filtered http-proxy
+
+Nmap scan report for 192.168.90.22 (192.168.90.22)
+Host is up.
+
+PORT     STATE    SERVICE
+80/tcp   filtered http
+443/tcp  filtered https
+8080/tcp filtered http-proxy
+
+Nmap done: 2 IP addresses (2 hosts up) scanned in 1.30 seconds
+
+[*] Step 2: Auditing Level 3 Ops Connectivity (EWS)...
+  [TIME] Action started at: 2026-04-21 10:05:24.791
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 07:05 +0000
+Nmap scan report for 192.168.97.5 (192.168.97.5)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+3389/tcp filtered ms-wbt-server
+
+Nmap done: 1 IP address (1 host up) scanned in 3.09 seconds
+
+[*] Step 3: Auditing Level 2 Supervisory Connectivity (HMI)...
+  [TIME] Action started at: 2026-04-21 10:05:28.027
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 07:05 +0000
+Nmap scan report for 192.168.96.10 (192.168.96.10)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+3389/tcp filtered ms-wbt-server
+8080/tcp filtered http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 3.34 seconds
+
+[*] Step 4: Auditing Level 1/0 Control Connectivity (PLC)...
+  [TIME] Action started at: 2026-04-21 10:05:31.638
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 07:05 +0000
+Nmap scan report for 192.168.95.2 (192.168.95.2)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+502/tcp  filtered mbap
+8080/tcp filtered http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 3.32 seconds
+
+[*] Step 5: Launching Mdbget (Modbus Scan) to extract PLC registers...
+  [TIME] Action started at: 2026-04-21 10:05:35.233
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+[*] [1/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [2/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [3/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [4/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [5/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+
+[*] Step 6: Attempting False Data Injection (Modbus Write) to hijack Reactor Setpoints...
+  [TIME] Action started at: 2026-04-21 10:05:52.535
+[*] [1/1] Executing False Data Injection (FDI) on Register 2 with Value 55555...
+[-] Failed to connect to PLC.
+Connection to (192.168.95.2, 502) failed: timed out
+[+] Scenario A complete. Verify that 'Filtered' results and 'Failed' writes correspond to SIEM 'FW DROP' logs.
+
+[0;31m==== SCENARIO B: Insider Threat — Machine Identity Sabotage ====[0m
+
+[*] Step 1: Navigating to Zero-Trust Gateway (Guacamole)...
+  [0;36m[TIME][0m 2026-04-21 10:05:55.985
+[*] Step 2: Opening remote desktop session (VNC) to EWS...
+  [0;36m[TIME][0m 2026-04-21 10:06:04.122
+  [i] Waiting for Guacamole VNC session to establish via Playwright...
+  [0;32m[SUCCESS][0m Guacamole connection established. Attacker now has desktop access to EWS.
+
+[*] Step 3: Modifying PLC program on EWS (chemical.st)...
+  [0;36m[TIME][0m 2026-04-21 10:06:10.714
+  [0;32m[+][0m chemical.st modified with sabotage values.
+[*] Step 4: Logging into PLC Console and uploading malicious program...
+  [0;36m[TIME][0m 2026-04-21 10:06:25.874
+  [i] Passing custom exploit tools from Kali to EWS...
+  [i] Executing automated PLC management commands...
+  [i] Initiating OAuth2 flow through Pomerium gateway...
+  [i] Submitting Keycloak credentials...
+  [+] Pomerium session established. Accessing PLC management console...
+  [+] PLC console login SUCCESSFUL — Suricata alert 1000101 should fire.
+  [+] Sabotaged program uploaded to PLC successfully.
+  [i] Triggering compilation...
+  [i] Waiting for compilation to complete...
+  [i] Starting PLC runtime...
+  [+] PLC compilation triggered and runtime started.
+  [+] PLC login attack step complete.
+  [i] Activating sabotage setpoint via PLC Modbus (pressure_sp = 65535)...
+  [+] pressure_sp forced to 65535 via Modbus FC6.
+  [0;32m[+][0m Sabotaged program active.
+[*] Step 5: Monitoring Reactor Pressure Increase (Physical Sabotage)...
+  [0;36m[TIME][0m 2026-04-21 10:06:41.599
+  [i] Sabotaged program active. Waiting for physical process impact...
+  [0;32m[+][0m Process impact window complete.
+[*] Step 6: Closing Guacamole session...
+
+[1;33m==== SCENARIO B COMPLETE ====[0m
+  [DETECTION SUMMARY — SCENARIO B]
+    - Zero-Trust Identity Verified (MFA Satisfied)
+    - PLC program file (chemical.st) modified on EWS (FIM)
+    - PLC Management Console: Successful Admin Login Detected
+    - Correlation: FIM change + PLC Console Access (Insider Threat)
+    - OT Anomaly: Reactor Pressure > 80%
+    - CRITICAL: Reactor Pressure > 95% (Explosion Risk)
+    - Full Kill-Chain: File Tampering + PLC Upload + Process Sabotage
+
+==== SCENARIO C: Identity Brute Force & MFA Enforcement ====
+[*] Step 1: Brute-forcing engineer credentials (wrong passwords)...
+  [TIME] Action started at: 2026-04-21 10:08:44.832
+  [+] 8 failed login attempts sent. Check Wazuh for rules 100502, 100520.
+
+[*] Step 2: Correct password WITHOUT OTP (MFA blocks access)...
+  [TIME] Action started at: 2026-04-21 10:08:45.688
+  [KEYCLOAK RESPONSE] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [!] Result: Access DENIED — password accepted but MFA requirement blocks token issuance.
+
+[*] Step 3: Correct password + WRONG OTP code (attacker guessing MFA)...
+  [TIME] Action started at: 2026-04-21 10:08:45.794
+  [OTP=123456] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [OTP=654321] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [OTP=000000] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [!] Result: Access DENIED — all OTP guesses rejected. MFA enforcement validated.
+[+] Scenario C complete. In a traditional OT lab, Step 2 alone would grant full access.
+
+==== FINAL STEP: GLOBAL SYSTEM RESTORATION ====
+[*] Step 7: Restoring PLC values to safe operating state...
+  [TIME] Action started at: 2026-04-21 10:08:46.139
+  [i] Initiating OAuth2 flow through Pomerium gateway...
+  [i] Submitting Keycloak credentials...
+  [+] Pomerium session established. Accessing PLC management console...
+  [+] PLC console login SUCCESSFUL — Suricata alert 1000101 should fire.
+  [+] Sabotaged program uploaded to PLC successfully.
+  [i] Triggering compilation...
+  [i] Waiting for compilation to complete...
+  [i] Starting PLC runtime...
+  [+] PLC compilation triggered and runtime started.
+  [+] PLC login attack step complete.
+[+] pressure_sp restored to 55295
+[+] PLC Values Restored. System Cleaned.
+
+==== ATTACK AUTOMATION COMPLETE ====
+[*] Run 'python3 calculate_dissertation_metrics.py' to generate the report.
+[*] Generating report with ID 8...
+[+] Report saved: test_runs_20260421_093643/dissertation_metrics_report_20260421_008.txt
+[*] Waiting 10s before next run...
+
+========== RUN 9 / 10 ==========
+[*] 2026-04-21 10:09:27 - Starting attack scenario iteration...
+[*] Running attack scenarios...
+==== SCENARIO A: OT Network & Protocol Reconnaissance Audit ====
+[*] Step 1: Auditing IDMZ Zone (Proxies & Gateways)...
+  [TIME] Action started at: 2026-04-21 10:09:27.139
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 07:09 +0000
+Nmap scan report for guacamole.localhost.pomerium.io (192.168.90.21)
+Host is up (0.00019s latency).
+
+PORT     STATE    SERVICE
+80/tcp   filtered http
+443/tcp  open     https
+8080/tcp filtered http-proxy
+
+Nmap scan report for 192.168.90.22 (192.168.90.22)
+Host is up.
+
+PORT     STATE    SERVICE
+80/tcp   filtered http
+443/tcp  filtered https
+8080/tcp filtered http-proxy
+
+Nmap done: 2 IP addresses (2 hosts up) scanned in 1.46 seconds
+
+[*] Step 2: Auditing Level 3 Ops Connectivity (EWS)...
+  [TIME] Action started at: 2026-04-21 10:09:28.814
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 07:09 +0000
+Nmap scan report for 192.168.97.5 (192.168.97.5)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+3389/tcp filtered ms-wbt-server
+
+Nmap done: 1 IP address (1 host up) scanned in 4.50 seconds
+
+[*] Step 3: Auditing Level 2 Supervisory Connectivity (HMI)...
+  [TIME] Action started at: 2026-04-21 10:09:33.513
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 07:09 +0000
+Nmap scan report for 192.168.96.10 (192.168.96.10)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+3389/tcp filtered ms-wbt-server
+8080/tcp filtered http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 3.15 seconds
+
+[*] Step 4: Auditing Level 1/0 Control Connectivity (PLC)...
+  [TIME] Action started at: 2026-04-21 10:09:36.810
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 07:09 +0000
+Nmap scan report for 192.168.95.2 (192.168.95.2)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+502/tcp  filtered mbap
+8080/tcp filtered http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 3.23 seconds
+
+[*] Step 5: Launching Mdbget (Modbus Scan) to extract PLC registers...
+  [TIME] Action started at: 2026-04-21 10:09:40.179
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+[*] [1/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [2/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [3/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [4/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [5/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+
+[*] Step 6: Attempting False Data Injection (Modbus Write) to hijack Reactor Setpoints...
+  [TIME] Action started at: 2026-04-21 10:09:57.516
+[*] [1/1] Executing False Data Injection (FDI) on Register 2 with Value 55555...
+[-] Failed to connect to PLC.
+Connection to (192.168.95.2, 502) failed: timed out
+[+] Scenario A complete. Verify that 'Filtered' results and 'Failed' writes correspond to SIEM 'FW DROP' logs.
+
+[0;31m==== SCENARIO B: Insider Threat — Machine Identity Sabotage ====[0m
+
+[*] Step 1: Navigating to Zero-Trust Gateway (Guacamole)...
+  [0;36m[TIME][0m 2026-04-21 10:10:00.950
+[*] Step 2: Opening remote desktop session (VNC) to EWS...
+  [0;36m[TIME][0m 2026-04-21 10:10:09.096
+  [i] Waiting for Guacamole VNC session to establish via Playwright...
+  [0;32m[SUCCESS][0m Guacamole connection established. Attacker now has desktop access to EWS.
+
+[*] Step 3: Modifying PLC program on EWS (chemical.st)...
+  [0;36m[TIME][0m 2026-04-21 10:10:15.908
+  [0;32m[+][0m chemical.st modified with sabotage values.
+[*] Step 4: Logging into PLC Console and uploading malicious program...
+  [0;36m[TIME][0m 2026-04-21 10:10:31.071
+  [i] Passing custom exploit tools from Kali to EWS...
+  [i] Executing automated PLC management commands...
+  [i] Initiating OAuth2 flow through Pomerium gateway...
+  [i] Submitting Keycloak credentials...
+  [+] Pomerium session established. Accessing PLC management console...
+  [+] PLC console login SUCCESSFUL — Suricata alert 1000101 should fire.
+  [+] Sabotaged program uploaded to PLC successfully.
+  [i] Triggering compilation...
+  [i] Waiting for compilation to complete...
+  [i] Starting PLC runtime...
+  [+] PLC compilation triggered and runtime started.
+  [+] PLC login attack step complete.
+  [i] Activating sabotage setpoint via PLC Modbus (pressure_sp = 65535)...
+  [+] pressure_sp forced to 65535 via Modbus FC6.
+  [0;32m[+][0m Sabotaged program active.
+[*] Step 5: Monitoring Reactor Pressure Increase (Physical Sabotage)...
+  [0;36m[TIME][0m 2026-04-21 10:10:46.777
+  [i] Sabotaged program active. Waiting for physical process impact...
+  [0;32m[+][0m Process impact window complete.
+[*] Step 6: Closing Guacamole session...
+
+[1;33m==== SCENARIO B COMPLETE ====[0m
+  [DETECTION SUMMARY — SCENARIO B]
+    - Zero-Trust Identity Verified (MFA Satisfied)
+    - PLC program file (chemical.st) modified on EWS (FIM)
+    - PLC Management Console: Successful Admin Login Detected
+    - Correlation: FIM change + PLC Console Access (Insider Threat)
+    - OT Anomaly: Reactor Pressure > 80%
+    - CRITICAL: Reactor Pressure > 95% (Explosion Risk)
+    - Full Kill-Chain: File Tampering + PLC Upload + Process Sabotage
+
+==== SCENARIO C: Identity Brute Force & MFA Enforcement ====
+[*] Step 1: Brute-forcing engineer credentials (wrong passwords)...
+  [TIME] Action started at: 2026-04-21 10:12:49.856
+  [+] 8 failed login attempts sent. Check Wazuh for rules 100502, 100520.
+
+[*] Step 2: Correct password WITHOUT OTP (MFA blocks access)...
+  [TIME] Action started at: 2026-04-21 10:12:50.712
+  [KEYCLOAK RESPONSE] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [!] Result: Access DENIED — password accepted but MFA requirement blocks token issuance.
+
+[*] Step 3: Correct password + WRONG OTP code (attacker guessing MFA)...
+  [TIME] Action started at: 2026-04-21 10:12:50.814
+  [OTP=123456] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [OTP=654321] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [OTP=000000] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [!] Result: Access DENIED — all OTP guesses rejected. MFA enforcement validated.
+[+] Scenario C complete. In a traditional OT lab, Step 2 alone would grant full access.
+
+==== FINAL STEP: GLOBAL SYSTEM RESTORATION ====
+[*] Step 7: Restoring PLC values to safe operating state...
+  [TIME] Action started at: 2026-04-21 10:12:51.156
+  [i] Initiating OAuth2 flow through Pomerium gateway...
+  [i] Submitting Keycloak credentials...
+  [+] Pomerium session established. Accessing PLC management console...
+  [+] PLC console login SUCCESSFUL — Suricata alert 1000101 should fire.
+  [+] Sabotaged program uploaded to PLC successfully.
+  [i] Triggering compilation...
+  [i] Waiting for compilation to complete...
+  [i] Starting PLC runtime...
+  [+] PLC compilation triggered and runtime started.
+  [+] PLC login attack step complete.
+[+] pressure_sp restored to 55295
+[+] PLC Values Restored. System Cleaned.
+
+==== ATTACK AUTOMATION COMPLETE ====
+[*] Run 'python3 calculate_dissertation_metrics.py' to generate the report.
+[*] Generating report with ID 9...
+[+] Report saved: test_runs_20260421_093643/dissertation_metrics_report_20260421_009.txt
+[*] Waiting 10s before next run...
+
+========== RUN 10 / 10 ==========
+[*] 2026-04-21 10:13:31 - Starting attack scenario iteration...
+[*] Running attack scenarios...
+==== SCENARIO A: OT Network & Protocol Reconnaissance Audit ====
+[*] Step 1: Auditing IDMZ Zone (Proxies & Gateways)...
+  [TIME] Action started at: 2026-04-21 10:13:32.004
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 07:13 +0000
+Nmap scan report for guacamole.localhost.pomerium.io (192.168.90.21)
+Host is up (0.00010s latency).
+
+PORT     STATE    SERVICE
+80/tcp   filtered http
+443/tcp  open     https
+8080/tcp filtered http-proxy
+
+Nmap scan report for 192.168.90.22 (192.168.90.22)
+Host is up.
+
+PORT     STATE    SERVICE
+80/tcp   filtered http
+443/tcp  filtered https
+8080/tcp filtered http-proxy
+
+Nmap done: 2 IP addresses (2 hosts up) scanned in 1.46 seconds
+
+[*] Step 2: Auditing Level 3 Ops Connectivity (EWS)...
+  [TIME] Action started at: 2026-04-21 10:13:33.759
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 07:13 +0000
+Nmap scan report for 192.168.97.5 (192.168.97.5)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+3389/tcp filtered ms-wbt-server
+
+Nmap done: 1 IP address (1 host up) scanned in 3.14 seconds
+
+[*] Step 3: Auditing Level 2 Supervisory Connectivity (HMI)...
+  [TIME] Action started at: 2026-04-21 10:13:37.000
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 07:13 +0000
+Nmap scan report for 192.168.96.10 (192.168.96.10)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+3389/tcp filtered ms-wbt-server
+8080/tcp filtered http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 3.24 seconds
+
+[*] Step 4: Auditing Level 1/0 Control Connectivity (PLC)...
+  [TIME] Action started at: 2026-04-21 10:13:40.322
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-04-21 07:13 +0000
+Nmap scan report for 192.168.95.2 (192.168.95.2)
+Host is up.
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+80/tcp   filtered http
+443/tcp  filtered https
+502/tcp  filtered mbap
+8080/tcp filtered http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 3.22 seconds
+
+[*] Step 5: Launching Mdbget (Modbus Scan) to extract PLC registers...
+  [TIME] Action started at: 2026-04-21 10:13:43.639
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+Connection to (192.168.95.2, 502) failed: timed out
+[*] [1/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [2/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [3/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [4/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+[*] [5/5] Scanning PLC at 192.168.95.2...
+[-] Failed to connect to PLC.
+
+[*] Step 6: Attempting False Data Injection (Modbus Write) to hijack Reactor Setpoints...
+  [TIME] Action started at: 2026-04-21 10:14:00.915
+Connection to (192.168.95.2, 502) failed: timed out
+[*] [1/1] Executing False Data Injection (FDI) on Register 2 with Value 55555...
+[-] Failed to connect to PLC.
+[+] Scenario A complete. Verify that 'Filtered' results and 'Failed' writes correspond to SIEM 'FW DROP' logs.
+
+[0;31m==== SCENARIO B: Insider Threat — Machine Identity Sabotage ====[0m
+
+[*] Step 1: Navigating to Zero-Trust Gateway (Guacamole)...
+  [0;36m[TIME][0m 2026-04-21 10:14:04.344
+[*] Step 2: Opening remote desktop session (VNC) to EWS...
+  [0;36m[TIME][0m 2026-04-21 10:14:12.496
+  [i] Waiting for Guacamole VNC session to establish via Playwright...
+  [0;32m[SUCCESS][0m Guacamole connection established. Attacker now has desktop access to EWS.
+
+[*] Step 3: Modifying PLC program on EWS (chemical.st)...
+  [0;36m[TIME][0m 2026-04-21 10:14:19.045
+  [0;32m[+][0m chemical.st modified with sabotage values.
+[*] Step 4: Logging into PLC Console and uploading malicious program...
+  [0;36m[TIME][0m 2026-04-21 10:14:34.205
+  [i] Passing custom exploit tools from Kali to EWS...
+  [i] Executing automated PLC management commands...
+  [i] Initiating OAuth2 flow through Pomerium gateway...
+  [i] Submitting Keycloak credentials...
+  [+] Pomerium session established. Accessing PLC management console...
+  [+] PLC console login SUCCESSFUL — Suricata alert 1000101 should fire.
+  [+] Sabotaged program uploaded to PLC successfully.
+  [i] Triggering compilation...
+  [i] Waiting for compilation to complete...
+  [i] Starting PLC runtime...
+  [+] PLC compilation triggered and runtime started.
+  [+] PLC login attack step complete.
+  [i] Activating sabotage setpoint via PLC Modbus (pressure_sp = 65535)...
+  [+] pressure_sp forced to 65535 via Modbus FC6.
+  [0;32m[+][0m Sabotaged program active.
+[*] Step 5: Monitoring Reactor Pressure Increase (Physical Sabotage)...
+  [0;36m[TIME][0m 2026-04-21 10:14:49.853
+  [i] Sabotaged program active. Waiting for physical process impact...
+  [0;32m[+][0m Process impact window complete.
+[*] Step 6: Closing Guacamole session...
+
+[1;33m==== SCENARIO B COMPLETE ====[0m
+  [DETECTION SUMMARY — SCENARIO B]
+    - Zero-Trust Identity Verified (MFA Satisfied)
+    - PLC program file (chemical.st) modified on EWS (FIM)
+    - PLC Management Console: Successful Admin Login Detected
+    - Correlation: FIM change + PLC Console Access (Insider Threat)
+    - OT Anomaly: Reactor Pressure > 80%
+    - CRITICAL: Reactor Pressure > 95% (Explosion Risk)
+    - Full Kill-Chain: File Tampering + PLC Upload + Process Sabotage
+
+==== SCENARIO C: Identity Brute Force & MFA Enforcement ====
+[*] Step 1: Brute-forcing engineer credentials (wrong passwords)...
+  [TIME] Action started at: 2026-04-21 10:16:52.945
+  [+] 8 failed login attempts sent. Check Wazuh for rules 100502, 100520.
+
+[*] Step 2: Correct password WITHOUT OTP (MFA blocks access)...
+  [TIME] Action started at: 2026-04-21 10:16:53.811
+  [KEYCLOAK RESPONSE] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [!] Result: Access DENIED — password accepted but MFA requirement blocks token issuance.
+
+[*] Step 3: Correct password + WRONG OTP code (attacker guessing MFA)...
+  [TIME] Action started at: 2026-04-21 10:16:53.916
+  [OTP=123456] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [OTP=654321] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [OTP=000000] {"error":"invalid_grant","error_description":"Invalid user credentials"}
+  [!] Result: Access DENIED — all OTP guesses rejected. MFA enforcement validated.
+[+] Scenario C complete. In a traditional OT lab, Step 2 alone would grant full access.
+
+==== FINAL STEP: GLOBAL SYSTEM RESTORATION ====
+[*] Step 7: Restoring PLC values to safe operating state...
+  [TIME] Action started at: 2026-04-21 10:16:54.225
+  [i] Initiating OAuth2 flow through Pomerium gateway...
+  [i] Submitting Keycloak credentials...
+  [+] Pomerium session established. Accessing PLC management console...
+  [+] PLC console login SUCCESSFUL — Suricata alert 1000101 should fire.
+  [+] Sabotaged program uploaded to PLC successfully.
+  [i] Triggering compilation...
+  [i] Waiting for compilation to complete...
+  [i] Starting PLC runtime...
+  [+] PLC compilation triggered and runtime started.
+  [+] PLC login attack step complete.
+[+] pressure_sp restored to 55295
+[+] PLC Values Restored. System Cleaned.
+
+==== ATTACK AUTOMATION COMPLETE ====
+[*] Run 'python3 calculate_dissertation_metrics.py' to generate the report.
+[*] Generating report with ID 10...
+[+] Report saved: test_runs_20260421_093643/dissertation_metrics_report_20260421_010.txt
+
+==========================================
+  ALL 10 RUNS COMPLETED
+==========================================
+
+[*] Results saved to: test_runs_20260421_093643
+[*] Report files:
+    test_runs_20260421_093643/dissertation_metrics_report_20260421_001.txt (18K)
+    test_runs_20260421_093643/dissertation_metrics_report_20260421_002.txt (18K)
+    test_runs_20260421_093643/dissertation_metrics_report_20260421_003.txt (18K)
+    test_runs_20260421_093643/dissertation_metrics_report_20260421_004.txt (18K)
+    test_runs_20260421_093643/dissertation_metrics_report_20260421_005.txt (18K)
+    test_runs_20260421_093643/dissertation_metrics_report_20260421_006.txt (18K)
+    test_runs_20260421_093643/dissertation_metrics_report_20260421_007.txt (18K)
+    test_runs_20260421_093643/dissertation_metrics_report_20260421_008.txt (18K)
+    test_runs_20260421_093643/dissertation_metrics_report_20260421_009.txt (18K)
+    test_runs_20260421_093643/dissertation_metrics_report_20260421_010.txt (18K)
+
+[*] Summary statistics:
+    Total reports generated: 10 / 10
+[+] SUCCESS: All 10 iterations completed successfully!
+
+[*] Next steps:
+    - Review reports in: test_runs_20260421_093643
+    - Compare metrics across runs for stability analysis
+    - Archive results: tar czf test_runs_20260421_093643.tar.gz test_runs_20260421_093643

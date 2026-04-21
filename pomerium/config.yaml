@@ -36,7 +36,6 @@ routes:
         and:
           - claim/groups: ot-engineer
           - source_ip: 192.168.97.5/32
- 
     allow_websockets: true
   - from: https://simulation.localhost.pomerium.io
     to: http://192.168.95.10:80

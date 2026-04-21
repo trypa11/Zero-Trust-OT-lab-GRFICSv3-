@@ -12,17 +12,18 @@ wazuh_config/certs/
 **/*.crt
 
 # Keycloak Backups (excludes timestamped exports, keeps seed)
-keycloak_backups/
 
-# Logs, Databases and Temp result files
-*.log
+# Results and Logs
 *.sqlite
 *.db
 *.bak
-latest_events.csv
-latest_alerts.json
-scenario_b_*.txt
-dissertation_metrics_report.txt
+results/*
+!results/logs/
+results/logs/*
+!results/logs/10_runs_execution.log
+!results/metrics/
+results/metrics/*
+!results/metrics/dissertation_metrics_report*.txt
 
 # Python Environment
 __pycache__/

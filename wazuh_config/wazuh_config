@@ -3,7 +3,7 @@
     <jsonout_output>yes</jsonout_output>
     <alerts_log>yes</alerts_log>
     <logall>no</logall>
-    <logall_json>no</logall_json>
+    <logall_json>yes</logall_json>
     <email_notification>no</email_notification>
     <smtp_server>smtp.example.wazuh.com</smtp_server>
     <email_from>wazuh@example.wazuh.com</email_from>
@@ -38,6 +38,7 @@
     <protocol>udp</protocol>
     <allowed-ips>192.168.90.0/24</allowed-ips>
     <allowed-ips>192.168.100.20</allowed-ips>
+    <allowed-ips>192.168.100.200</allowed-ips>
   </remote>
 
   <rootcheck>

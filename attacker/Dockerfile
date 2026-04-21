@@ -56,6 +56,10 @@ COPY index.html /opt/noVNC/index.html
 COPY start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
 
+# Scripts and tools are now mounted via volumes (see docker-compose.yml)
+RUN mkdir -p /home/kali/attack_logic && \
+    chown -R kali:kali /home/kali/
+
 # allow passwordless sudo
 RUN echo "kali ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/kali \
  && chmod 440 /etc/sudoers.d/kali

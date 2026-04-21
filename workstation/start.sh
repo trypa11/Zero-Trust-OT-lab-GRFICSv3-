@@ -8,7 +8,10 @@ if [ ! -f /home/${USERNAME}/.vnc/passwd ]; then
   chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.vnc
 fi
 
-route add -net 192.168.0.0/16 gw 192.168.97.200
+# Set default gateway to the Zero-Trust Router
+for i in {1..5}; do
+  ip route replace 192.168.0.0/16 via 192.168.97.200 && break || sleep 2
+done
 
 # Add host entries for Pomerium services
 echo "192.168.90.21 authenticate.localhost.pomerium.io nexterm.localhost.pomerium.io hmi.localhost.pomerium.io plc.localhost.pomerium.io simulation.localhost.pomerium.io router.localhost.pomerium.io" >> /etc/hosts

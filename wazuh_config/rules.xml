@@ -124,11 +124,6 @@
   </rule>
 
   <!-- MALICIOUS: Rapid reactor pressure escalation (sustained attack) -->
-  <rule id="100033" level="15" frequency="5" timeframe="120">
-    <if_matched_sid>100026</if_matched_sid>
-    <description>Suricata: ATTACK - Sustained High Reactor Pressure (possible manipulation)</description>
-    <group>modbus_attack,industrial_security,reactor_critical,</group>
-  </rule>
 
   <!-- MALICIOUS: Multiple unauthorized read attempts (mapping attack) -->
   <rule id="100034" level="12" frequency="10" timeframe="120">
@@ -320,13 +315,6 @@
   </rule>
 
   <!-- Keycloak PLC Access + Reactor Pressure Spike (possible authorized but anomalous activity) -->
-  <rule id="100202" level="12">
-    <if_matched_sid>100510,100026</if_matched_sid>
-    <same_user/>
-    <timeframe>120</timeframe>
-    <description>ANOMALY: User $(user) accessed PLC + High reactor pressure triggered within 120s</description>
-    <group>plc_anomaly,industrial_security,audit,</group>
-  </rule>
 
   <!-- Multiple unauthorized reads followed by write (classic attack progression) -->
   <rule id="100203" level="13" frequency="2" timeframe="3600">
@@ -350,7 +338,7 @@
 
   <!-- INSIDER THREAT: PLC program file modified on EWS (FIM/Syscheck) -->
   <rule id="100210" level="12">
-    <if_sid>550,551,553,554</if_sid>
+    <if_sid>550,553,554</if_sid>
     <match>chemical.st</match>
     <description>INSIDER THREAT: PLC program file (chemical.st) modified on EWS — potential sabotage</description>
     <group>insider_threat,fim,plc_compromise,industrial_security,pci_dss_11.5,nist_800_53_SI.7,</group>
@@ -365,7 +353,7 @@
   </rule>
 
   <!-- INSIDER THREAT: Full kill chain — file modification + PLC access + reactor critical -->
-  <rule id="100212" level="15" frequency="2" timeframe="1800">
+  <rule id="100212" level="15" frequency="2" timeframe="300">
     <if_matched_sid>100027</if_matched_sid>
     <if_matched_group>insider_threat</if_matched_group>
     <description>CRITICAL: Full Insider Threat Kill Chain — PLC program tampering led to reactor critical state</description>

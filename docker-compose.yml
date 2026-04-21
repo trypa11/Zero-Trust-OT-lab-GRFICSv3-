@@ -42,6 +42,7 @@ services:
     networks:
       d-man-ops-net:
         ipv4_address: 192.168.97.5
+      a-grfics-admin:
     volumes:
       - /var/log/wazuh
     # Optional if you want to override default CMD
@@ -79,8 +80,7 @@ services:
       a-grfics-admin:
     volumes:
       - ./attacker/start.sh:/usr/local/bin/start.sh:ro
-      - ./attacker/attack_automation.sh:/home/kali/Desktop/attack_automation.sh:ro
-      - ./attacker/attack_suite.py:/home/kali/Desktop/attack_suite.py:ro
+      - ./attack_logic:/home/kali/attack_logic:rw
     sysctls:
       net.ipv4.conf.default.arp_announce: 2
       net.ipv4.conf.all.arp_announce: 2
@@ -142,7 +142,7 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:23.0
     container_name: keycloak
-    command: start-dev
+    command: start-dev --log=console,file --log-file=/opt/keycloak/data/logs/keycloak.log
     environment:
       KC_HOSTNAME: keycloak.localhost.pomerium.io
       KC_HOSTNAME_STRICT: "false"
@@ -150,14 +150,19 @@ services:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KC_LOG: "console,file"
       KC_LOG_FILE: "/opt/keycloak/data/logs/keycloak.log"
+      KC_LOG_LEVEL: "INFO,org.keycloak.events:info"
       KC_LOG_CONSOLE_OUTPUT: "json"
       KC_LOG_FILE_OUTPUT: "json"
-      KC_LOG_LEVEL: "INFO,org.keycloak.events:info"
     ports:
       - "8080:8080"
     volumes:
       - keycloak_data:/opt/keycloak/data
       - keycloak_logs:/opt/keycloak/data/logs
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.100.51:514"
+        tag: "keycloak"
     networks:
       e-enterprise-net:
         ipv4_address: 192.168.100.20
@@ -185,6 +190,11 @@ services:
       - "443:443"
     volumes:
       - ./pomerium/config.yaml:/pomerium/config.yaml
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.100.51:514"
+        tag: "pomerium"
     networks:
       idmz-net:
         ipv4_address: 192.168.90.21
@@ -309,6 +319,11 @@ services:
     depends_on:
       - guacamole_db
       - guacd
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.100.51:514"
+        tag: "guacamole"
     networks:
       idmz-net:
         ipv4_address: 192.168.90.22

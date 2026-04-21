@@ -140,10 +140,12 @@ Custom Suricata signatures in `router/ot.rules` provide OT-specific threat detec
 | `1000030` | High | Unauthorised Modbus Write attempt | Write from any source ≠ HMI |
 | `1000031` | Medium | Unauthorised Modbus Read (recon) | Read from Enterprise zone |
 | `1000041` | Medium | Network scan / Nmap probes | SYN packets from Enterprise to OT zones |
-| `1000100` | — | PLC login attempt (internal) | HTTP POST to `/login` on PLC |
+| `1000100` | — | PLC login attempt (flow tracking) | HTTP POST to `/login` on PLC; sets flowbit only, no alert |
 | `1000101` | High | PLC login successful | HTTP redirect to `/dashboard` from PLC |
 
-> **Tuning note:** The pressure threshold was raised from 80% to 90% to prevent false positives during normal operation (baseline ~84%). This ensures that alerts fire only during genuine process manipulation.
+> **Tuning notes:**
+> - **Rule 1000100** has no severity because it uses `noalert;` — it only sets a flowbit (`plc.login.attempt`) for rule 1000101 to track login context. This two-rule pattern ensures alerts fire only on successful login (1000101) while tracking failed attempts.
+> - **Pressure threshold** was raised from 80% to 90% to prevent false positives during normal operation (baseline ~84%). This ensures alerts fire only during genuine process manipulation.
 
 ---
 

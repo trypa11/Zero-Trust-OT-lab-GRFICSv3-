@@ -1,7 +1,7 @@
 #!/bin/bash
 # Zero-Trust OT Lab — Attack Automation Orchestrator
 # ================================================
-# Calls individual scenario scripts located in attacker/scenarios/
+# Calls individual scenario scripts located in attack_logic/scenarios/
 
 # Ensure scripts are executable
 chmod +x attack_logic/scenarios/*.sh
@@ -18,8 +18,8 @@ echo "    - Zero-Trust Identity Verified (MFA Satisfied)"
 echo "    - PLC program file (chemical.st) modified on EWS (FIM)"
 echo "    - PLC Management Console: Successful Admin Login Detected"
 echo "    - Correlation: FIM change + PLC Console Access (Insider Threat)"
-echo "    - OT Anomaly: Reactor Pressure > 80%"
-echo "    - CRITICAL: Reactor Pressure > 95% (Explosion Risk)"
+echo "    - OT Anomaly: Reactor Pressure > 90%"
+echo "    - CRITICAL: Reactor Pressure > 97% (Explosion Risk)"
 echo "    - Full Kill-Chain: File Tampering + PLC Upload + Process Sabotage"
 echo ""
 

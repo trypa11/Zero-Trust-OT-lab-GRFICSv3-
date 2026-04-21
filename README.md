@@ -39,7 +39,7 @@ All services run as Docker containers interconnected via isolated **MacVLAN** ne
 | :--- | :--- | :--- | :--- |
 | `simulation` | Physical process simulator (reactor) | Control (L1) | `192.168.95.10` |
 | `plc` | OpenPLC — runs the control logic (`chemical.st`) | Control (L1) | `192.168.95.2` |
-| `HMI` | ScadaBR — supervisory dashboard | Supervisory (L2) | `192.168.96.10` |
+| `HMI` | ScadaLTS — supervisory dashboard | Supervisory (L2) | `192.168.96.10` |
 | `EWS` | Engineering Workstation — PLC programming | Operations (L3) | `192.168.97.5` |
 | `pomerium` | Identity-Aware Proxy (IAP) | IDMZ (L3.5) | `192.168.90.21` |
 | `guacamole` | Remote desktop gateway | IDMZ (L3.5) | `192.168.90.22` |
@@ -149,7 +149,7 @@ Custom Suricata signatures in `router/ot.rules` provide OT-specific threat detec
 
 ## Attack Scenarios
 
-The lab includes a fully automated attack suite (`attacker/attack_automation.sh`) that validates the security stack's detection capabilities against three threat profiles. Each scenario can be run in isolation or as part of the complete evaluation.
+The lab includes a fully automated attack suite (`attack_logic/attack_automation.sh`) that validates the security stack's detection capabilities against three threat profiles. Each scenario can be run in isolation or as part of the complete evaluation.
 
 ### Scenario A — OT Network Reconnaissance
 **Attack Profile:** Remote attacker from Enterprise zone.
@@ -165,7 +165,7 @@ An attacker on the Enterprise network performs:
 **Attack Profile:** Compromised engineer with valid credentials.
 
 A Playwright-automated attack chain:
-1. **Authentication** — Logs in to Pomerium using valid engineer credentials (Username/password + OTP via Keycloak).
+1. **Authentication** — Logs in to Pomerium using valid engineer credentials.
 2. **Remote Access** — Establishes a Guacamole VNC session to the EWS desktop.
 3. **Program Tampering** — Modifies the reactor control logic (`chemical.st`) via direct filesystem editing.
 4. **Malicious Deployment** — Uploads the tampered PLC program through the legitimate web management interface.
@@ -178,7 +178,7 @@ A Playwright-automated attack chain:
 
 A multi-step correlation rule fires an **Insider Threat** alert within seconds of the sabotage.
 
-**Implementation:** Automated via Playwright (`attacker/playwright_guacamole.py`), eliminating manual GUI testing while maintaining full fidelity of human interaction patterns.
+**Implementation:** Automated via Playwright (`attack_logic/tools/playwright_guacamole.py`), eliminating manual GUI testing while maintaining full fidelity of human interaction patterns.
 
 ### Scenario C — Identity Brute Force & Multi-Factor Authentication Validation
 **Attack Profile:** Remote attacker targeting credential compromise.
@@ -192,7 +192,7 @@ An attacker attempts:
 
 ---
 
-## Dissertation Evaluation Results (2026-04-21)
+## Dissertation Evaluation Results 
 
 ### Latest Test Run Summary
 
@@ -244,7 +244,7 @@ docker exec -it wazuh.manager wazuh-control restart
 sleep 30
 
 # Execute all attack scenarios (Scenarios A, B, C in sequence)
-./attacker/attack_automation.sh
+./attack_logic/attack_automation.sh
 
 # Generate the metrics report
 python3 scripts/calculate_dissertation_metrics.py
@@ -313,7 +313,7 @@ docker compose down     # preserves Wazuh indices and Guacamole history
 | Remote Desktop | `https://guacamole.localhost.pomerium.io` | engineer | `ot-engineer` | VNC/SSH to EWS; all sessions recorded |
 | Simulation View | `https://simulation.localhost.pomerium.io` | engineer | `ot-engineer` | Reactor simulator HTTP API |
 | Router Admin | `https://router.localhost.pomerium.io` | admin | `admin` | Firewall rules, routing tables |
-| Keycloak | `https://keycloak.localhost.pomerium.io:8080/auth` | — | — | Admin console (unauthenticated; configure realms/users) |
+| Keycloak | `http://keycloak.localhost.pomerium.io:8080` | — | — | Admin console at `/admin` (unauthenticated; configure realms/users) |
 | SIEM Dashboard | `https://localhost:5601` | admin | — | OpenSearch Dashboards (direct, no Pomerium) |
 
 **Demo Credentials:**
@@ -376,8 +376,11 @@ Zero-Trust-OT-lab/
 │   ├── metrics/                        # Text reports & attack results
 │   └── logs/                           # Raw Wazuh alerts & execution logs
 │
-├── attack_logic/                       # Attack container & red-team automation
+├── attacker/                           # Attack container build (Kali image)
 │   ├── Dockerfile                      # Kali + Python + Playwright + VNC desktop build
+│   └── start.sh                        # Container entrypoint
+│
+├── attack_logic/                       # Red-team automation (mounted into kali container)
 │   ├── attack_automation.sh            # Main orchestrator (Scenarios A, B, C)
 │   ├── scenarios/                      # Per-scenario shell scripts
 │   │   ├── scenario_a.sh               # Network recon & Modbus protocol attacks
@@ -441,7 +444,7 @@ After deployment, verify all services are healthy:
 docker compose ps
 
 # Verify all services are "running" (not "restarting")
-# Expected output: 13 containers, all healthy within 3 minutes
+# Expected output: 19 containers (13 core services + 6 route-fixer sidecars), all healthy within 3 minutes
 ```
 
 ### Manual Scenario Testing
@@ -458,15 +461,15 @@ docker exec kali bash -c "
 
 **Scenario B — Insider Threat (automated):**
 ```bash
-docker exec attacker /bin/bash /opt/scenarios/scenario_b.sh
+docker exec kali /bin/bash /home/kali/attack_logic/scenarios/scenario_b.sh
 # Monitor: docker exec wazuh.manager tail -f /var/ossec/logs/alerts.json
 # Expect: File modification alerts → PLC login → Pressure anomaly (within 2–3 minutes)
 ```
 
 **Scenario C — Credential Brute Force (from CLI):**
 ```bash
-./rerun_scenario_c.sh
-# Check Keycloak logs: docker logs keycloak | grep "WARN|ERROR"
+docker exec kali /bin/bash /home/kali/attack_logic/scenarios/scenario_c.sh
+# Check Keycloak logs: docker logs keycloak | grep "WARN\|ERROR"
 # Wazuh should flag failed login attempts
 ```
 
@@ -489,7 +492,7 @@ curl -H "Authorization: Bearer $TOKEN" https://plc.localhost.pomerium.io/
 **Test 3: Bypassing MFA (should fail)**
 ```bash
 # Use Keycloak REST API to get token without OTP
-curl -X POST https://keycloak.localhost.pomerium.io:8080/auth/realms/ot-lab/protocol/openid-connect/token \
+curl -X POST http://keycloak.localhost.pomerium.io:8080/realms/ot-lab/protocol/openid-connect/token \
   -d "username=engineer&password=engineer123&grant_type=password&client_id=..."
 # Expected: 401 Unauthorized (MFA required)
 ```
@@ -567,7 +570,7 @@ If you use this lab for research, please cite:
 @software{zero-trust-ot-lab,
   author = {Papatriantafyllou, Tryfon Iason},
   title = {Zero-Trust OT Security Lab},
-  year = {2024},
+  year = {2026},
   url = {https://github.com/yourusername/Zero-Trust-OT-lab}
 }
 ```

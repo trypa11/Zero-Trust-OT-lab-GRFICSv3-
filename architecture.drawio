@@ -1,0 +1,75 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="zt-ot-arch-v2" name="Zero Trust OT Lab Architecture Top-Down">
+    <mxGraphModel dx="2476" dy="925" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="3df2OnhbmiUm3GAXQrU6-1" edge="1" parent="1" source="zone-enterprise" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeColor=default;startArrow=classic;startFill=1;" target="router">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="20" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="zone-enterprise" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="Level 4: Enterprise Network (192.168.100.0/24)" vertex="1">
+          <mxGeometry height="140" width="600" x="113.5" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="keycloak" parent="zone-enterprise" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Keycloak (IdP)&#xa;192.168.100.20" vertex="1">
+          <mxGeometry height="60" width="130" x="20" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="wazuh" parent="zone-enterprise" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Wazuh SIEM&#xa;192.168.100.50/51" vertex="1">
+          <mxGeometry height="60" width="130" x="170" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="kali" parent="zone-enterprise" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Kali (Attacker)&#xa;192.168.100.100" vertex="1">
+          <mxGeometry height="60" width="130" x="450" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="3df2OnhbmiUm3GAXQrU6-3" edge="1" parent="1" source="zone-idmz" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" target="router">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zone-idmz" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Level 3.5: Identity DMZ (192.168.90.0/24)" vertex="1">
+          <mxGeometry height="140" width="600" x="114" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="pomerium" parent="zone-idmz" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" value="Pomerium (IAP)&#xa;192.168.90.21" vertex="1">
+          <mxGeometry height="60" width="130" x="20" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="guacamole" parent="zone-idmz" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" value="Guacamole (ZT)&#xa;192.168.90.22" vertex="1">
+          <mxGeometry height="60" width="130" x="170" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="guacd" parent="zone-idmz" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" value="Guacd / DB&#xa;192.168.90.23/24" vertex="1">
+          <mxGeometry height="60" width="130" x="320" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="3df2OnhbmiUm3GAXQrU6-4" edge="1" parent="1" source="zone-ops" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;startArrow=classic;startFill=1;" target="router">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zone-ops" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Level 3: Management/Ops (192.168.97.0/24)" vertex="1">
+          <mxGeometry height="120" width="600" x="113" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="ews" parent="zone-ops" style="rounded=1;whiteSpace=wrap;html=1;" value="Engineering WS&#xa;192.168.97.5" vertex="1">
+          <mxGeometry height="60" width="150" x="20" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="3df2OnhbmiUm3GAXQrU6-5" edge="1" parent="1" source="zone-supervisory" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" target="router">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zone-supervisory" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Level 2: Supervisory Network (192.168.96.0/24)" vertex="1">
+          <mxGeometry height="120" width="600" x="113" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="hmi" parent="zone-supervisory" style="rounded=1;whiteSpace=wrap;html=1;" value="HMI (ScadaLTS)&#xa;192.168.96.10" vertex="1">
+          <mxGeometry height="60" width="150" x="20" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="3df2OnhbmiUm3GAXQrU6-6" edge="1" parent="1" source="zone-control" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" target="router">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zone-control" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Level 1: Control Network (192.168.95.0/24)" vertex="1">
+          <mxGeometry height="120" width="603.5" x="110" y="840" as="geometry" />
+        </mxCell>
+        <mxCell id="plc" parent="zone-control" style="rounded=1;whiteSpace=wrap;html=1;" value="PLC&#xa;192.168.95.2" vertex="1">
+          <mxGeometry height="60" width="130" x="20" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="simulation" parent="zone-control" style="rounded=1;whiteSpace=wrap;html=1;" value="Simulation (Reactor)&#xa;192.168.95.10" vertex="1">
+          <mxGeometry height="60" width="130" x="170" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="router" parent="1" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" value="Router / Firewall&#xa;+ Suricata IDS&#xa;Hub: .200" vertex="1">
+          <mxGeometry height="80" width="160" x="-190" y="430" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -31,6 +31,9 @@ A containerized laboratory for empirically validating **Zero-Trust Architecture 
 
 The lab models a five-zone OT network based on the Purdue Enterprise Reference Architecture (PERA). Unlike traditional perimeter-based designs that implicitly trust internal traffic, this environment enforces **continuous identity verification** at every boundary crossing. No service communicates directly with another unless explicitly authorised through a combination of identity, group membership, source IP, and protocol constraints.
 
+![Project Architecture](images/architecture.png)
+
+
 All services run as Docker containers interconnected via isolated **MacVLAN** networks (one per Purdue zone). A centralised router enforces iptables-based micro-segmentation with a **default-deny** forwarding policy, while an identity-aware reverse proxy (Pomerium) gates all human access through Keycloak-authenticated sessions with MFA.
 
 ### Container Inventory
@@ -156,6 +159,9 @@ The lab includes a fully automated attack suite (`attack_logic/attack_automation
 ### Scenario A — OT Network Reconnaissance
 **Attack Profile:** Remote attacker from Enterprise zone.
 
+![Scenario A Workflow](images/scenario_a.png)
+
+
 An attacker on the Enterprise network performs:
 - Nmap scanning across zones (network discovery)
 - Modbus register reads (protocol reconnaissance)
@@ -165,6 +171,9 @@ An attacker on the Enterprise network performs:
 
 ### Scenario B — Insider Threat: Automated Reactor Sabotage
 **Attack Profile:** Compromised engineer with valid credentials.
+
+![Scenario B Workflow](images/scenario_b.png)
+
 
 A Playwright-automated attack chain:
 1. **Authentication** — Logs in to Pomerium using valid engineer credentials.
@@ -184,6 +193,9 @@ A multi-step correlation rule fires an **Insider Threat** alert within seconds o
 
 ### Scenario C — Identity Brute Force & Multi-Factor Authentication Validation
 **Attack Profile:** Remote attacker targeting credential compromise.
+
+![Scenario C Workflow](images/scenario_c.png)
+
 
 An attacker attempts:
 1. **Credential Stuffing** — Eight consecutive failed password attempts
